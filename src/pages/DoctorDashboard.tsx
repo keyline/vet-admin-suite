@@ -53,11 +53,11 @@ const DoctorDashboard = () => {
             name,
             species,
             breed,
-            age
-          ),
-          pet_owners!inner(
-            name,
-            phone
+            age,
+            pet_owners!inner(
+              name,
+              phone
+            )
           ),
           cages(
             cage_number,
@@ -191,8 +191,8 @@ const DoctorDashboard = () => {
                         {admission.pets?.species}
                         {admission.pets?.breed && ` / ${admission.pets.breed}`}
                       </TableCell>
-                      <TableCell>{admission.pet_owners?.name}</TableCell>
-                      <TableCell>{admission.pet_owners?.phone}</TableCell>
+                      <TableCell>{admission.pets?.pet_owners?.name}</TableCell>
+                      <TableCell>{admission.pets?.pet_owners?.phone}</TableCell>
                       <TableCell>{getCageLocation(admission.cages)}</TableCell>
                       <TableCell>
                         {format(new Date(admission.admission_date), "MMM dd, yyyy")}
