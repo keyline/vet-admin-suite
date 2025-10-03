@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -70,6 +71,9 @@ export function MedicineDialog({
   onSubmit,
   isLoading,
 }: MedicineDialogProps) {
+  const [categoryOpen, setCategoryOpen] = React.useState(false);
+  const [unitOpen, setUnitOpen] = React.useState(false);
+
   const { data: categories = [] } = useQuery({
     queryKey: ["medicine-categories"],
     queryFn: async () => {
@@ -191,7 +195,7 @@ export function MedicineDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Category</FormLabel>
-                    <Popover>
+                    <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -213,6 +217,12 @@ export function MedicineDialog({
                             placeholder="Search or type new category..."
                             value={field.value}
                             onValueChange={field.onChange}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                setCategoryOpen(false);
+                              }
+                            }}
                           />
                           <CommandList>
                             <CommandEmpty>
@@ -225,6 +235,7 @@ export function MedicineDialog({
                                   value={category}
                                   onSelect={() => {
                                     field.onChange(category);
+                                    setCategoryOpen(false);
                                   }}
                                 >
                                   <Check
@@ -255,7 +266,7 @@ export function MedicineDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Unit</FormLabel>
-                    <Popover>
+                    <Popover open={unitOpen} onOpenChange={setUnitOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -277,6 +288,12 @@ export function MedicineDialog({
                             placeholder="Search or type new unit..."
                             value={field.value}
                             onValueChange={field.onChange}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                setUnitOpen(false);
+                              }
+                            }}
                           />
                           <CommandList>
                             <CommandEmpty>
@@ -289,6 +306,7 @@ export function MedicineDialog({
                                   value={unit}
                                   onSelect={() => {
                                     field.onChange(unit);
+                                    setUnitOpen(false);
                                   }}
                                 >
                                   <Check
