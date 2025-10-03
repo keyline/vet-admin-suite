@@ -49,7 +49,6 @@ const medicineSchema = z.object({
   unit_price: z.coerce.number().min(0, "Price must be positive"),
   stock_quantity: z.coerce.number().int().min(0, "Quantity must be positive"),
   reorder_level: z.coerce.number().int().min(0, "Reorder level must be positive"),
-  expiry_date: z.string().optional(),
   notes: z.string().optional(),
   active: z.boolean().default(true),
 });
@@ -125,7 +124,6 @@ export function MedicineDialog({
       unit_price: medicine?.unit_price || 0,
       stock_quantity: medicine?.stock_quantity || 0,
       reorder_level: medicine?.reorder_level || 10,
-      expiry_date: medicine?.expiry_date || "",
       notes: medicine?.notes || "",
       active: medicine?.active ?? true,
     },
@@ -371,19 +369,6 @@ export function MedicineDialog({
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="expiry_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="notes"
