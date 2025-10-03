@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 const Pets = () => {
   const navigate = useNavigate();
@@ -29,6 +30,15 @@ const Pets = () => {
           pet_owners (
             id,
             name
+          ),
+          admissions (
+            id,
+            admission_date,
+            cage_id,
+            cages (
+              cage_number,
+              name
+            )
           )
         `)
         .order("name");
@@ -74,30 +84,47 @@ const Pets = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Tag Number</TableHead>
                     <TableHead>Owner</TableHead>
                     <TableHead>Species</TableHead>
                     <TableHead>Breed</TableHead>
                     <TableHead>Age</TableHead>
                     <TableHead>Gender</TableHead>
+                    <TableHead>Cage Number</TableHead>
+                    <TableHead>Admission Date</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pets.map((pet) => (
-                    <TableRow key={pet.id}>
-                      <TableCell className="font-medium">{pet.name}</TableCell>
-                      <TableCell>{pet.pet_owners?.name || "-"}</TableCell>
-                      <TableCell>{pet.species}</TableCell>
-                      <TableCell>{pet.breed || "-"}</TableCell>
-                      <TableCell>{pet.age ? `${pet.age} years` : "-"}</TableCell>
-                      <TableCell className="capitalize">{pet.gender || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={pet.active ? "default" : "secondary"}>
-                          {pet.active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {pets.map((pet) => {
+                    const latestAdmission = pet.admissions?.[0];
+                    const cage = latestAdmission?.cages;
+                    
+                    return (
+                      <TableRow key={pet.id}>
+                        <TableCell className="font-medium">{pet.name}</TableCell>
+                        <TableCell>{pet.microchip_id || "-"}</TableCell>
+                        <TableCell>{pet.pet_owners?.name || "-"}</TableCell>
+                        <TableCell>{pet.species}</TableCell>
+                        <TableCell>{pet.breed || "-"}</TableCell>
+                        <TableCell>{pet.age ? `${pet.age} years` : "-"}</TableCell>
+                        <TableCell className="capitalize">{pet.gender || "-"}</TableCell>
+                        <TableCell>
+                          {cage ? `${cage.cage_number} - ${cage.name}` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {latestAdmission?.admission_date 
+                            ? format(new Date(latestAdmission.admission_date), "dd MMM yyyy")
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={pet.active ? "default" : "secondary"}>
+                            {pet.active ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
