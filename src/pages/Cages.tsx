@@ -59,16 +59,25 @@ export default function Cages() {
 
       if (error) throw error;
       
-      // Get current pet count for each cage
+      // Get current pet count for each cage and calculate dynamic status
       const cagesWithCount = await Promise.all(
         (data || []).map(async (cage) => {
           const { data: countData } = await supabase.rpc(
             'get_cage_current_pet_count',
             { cage_uuid: cage.id }
           );
+          const currentCount = countData || 0;
+          
+          // Determine dynamic status based on occupancy
+          let displayStatus = cage.status;
+          if (cage.status !== 'maintenance') {
+            displayStatus = currentCount >= cage.max_pet_count ? 'occupied' : 'available';
+          }
+          
           return {
             ...cage,
-            current_pet_count: countData || 0,
+            current_pet_count: currentCount,
+            display_status: displayStatus,
           };
         })
       );
@@ -182,8 +191,8 @@ export default function Cages() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(cage.status)}>
-                        {cage.status}
+                      <Badge variant={getStatusVariant(cage.display_status)}>
+                        {cage.display_status}
                       </Badge>
                     </TableCell>
                     <TableCell>
