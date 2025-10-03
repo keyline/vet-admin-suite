@@ -178,10 +178,7 @@ const DoctorDashboard = () => {
                         <div className="flex-1 space-y-2">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h4 className="font-semibold text-lg">
-                                {admission.pets?.name || "Unnamed Pet"}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm font-medium text-muted-foreground">
                                 Tag: {admission.pets?.microchip_id || "N/A"}
                               </p>
                             </div>
