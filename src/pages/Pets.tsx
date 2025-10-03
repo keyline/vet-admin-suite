@@ -152,8 +152,8 @@ const Pets = () => {
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={pet.active ? "default" : "secondary"}>
-                            {pet.active ? "Active" : "Inactive"}
+                          <Badge variant={pet.active ? "default" : "secondary"} className="text-xs">
+                            Under Treatment
                           </Badge>
                         </TableCell>
                         {canEdit('pets') && (
