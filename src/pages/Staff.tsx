@@ -55,6 +55,17 @@ const Staff = () => {
 
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
+      // Check if current user is admin
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!roleData || !["admin", "superadmin"].includes(roleData.role)) {
+        throw new Error("Only administrators can create staff members");
+      }
+
       let userId = null;
       
       // Create auth user if password is provided
