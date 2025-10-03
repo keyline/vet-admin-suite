@@ -132,6 +132,27 @@ export function TreatmentRecordDialog({
       });
     } else {
       setExistingVisitId(null);
+      // Reset form to empty when no existing data
+      setTreatmentData((prev) => ({
+        ...prev,
+        morning: {
+          temperature: "",
+          urine: "",
+          urineAmount: "",
+          stool: "",
+          stoolAmount: "",
+          medication: "",
+        },
+        evening: {
+          temperature: "",
+          urine: "",
+          urineAmount: "",
+          stool: "",
+          stoolAmount: "",
+          medication: "",
+        },
+        observations: "",
+      }));
     }
   }, [existingVisit]);
 
@@ -309,6 +330,7 @@ export function TreatmentRecordDialog({
                     date && setTreatmentData((prev) => ({ ...prev, date }))
                   }
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
