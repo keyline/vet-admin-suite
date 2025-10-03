@@ -150,8 +150,7 @@ const Pets = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                // TODO: Navigate to edit page or open edit dialog
-                                console.log("Edit pet:", pet.id);
+                                navigate(`/admissions?petId=${pet.id}`);
                               }}
                             >
                               <Edit className="h-4 w-4" />

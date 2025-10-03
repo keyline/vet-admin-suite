@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,6 +62,8 @@ type AdmissionFormValues = z.infer<typeof admissionFormSchema>;
 const Admissions = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const petId = searchParams.get("petId");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AdmissionFormValues>({
@@ -75,6 +77,88 @@ const Admissions = () => {
   });
 
   const unknownOwner = form.watch("unknownOwner");
+
+  // Fetch pet and admission data if petId is provided
+  const { data: petData, isLoading: isPetLoading } = useQuery({
+    queryKey: ["pet", petId],
+    queryFn: async () => {
+      if (!petId) return null;
+      const { data, error } = await supabase
+        .from("pets")
+        .select(`
+          *,
+          pet_owners (
+            id,
+            name,
+            phone,
+            address,
+            email
+          ),
+          admissions (
+            id,
+            admission_date,
+            cage_id,
+            reason,
+            brought_by,
+            xray_date,
+            operation_date,
+            antibiotics_schedule,
+            blood_test_report,
+            payment_received
+          )
+        `)
+        .eq("id", petId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!petId,
+  });
+
+  // Pre-fill form when pet data is loaded
+  useEffect(() => {
+    if (petData && petData.admissions && petData.admissions[0]) {
+      const admission = petData.admissions[0];
+      const owner = petData.pet_owners;
+      const antibiotics = admission.antibiotics_schedule as any;
+
+      form.reset({
+        // Owner information
+        unknownOwner: owner?.name === "Unknown Owner",
+        ownerName: owner?.name !== "Unknown Owner" ? owner?.name : "",
+        ownerPhone: owner?.phone !== "0000000000" ? owner?.phone : "",
+        ownerAddress: owner?.address !== "Unknown" ? owner?.address : "",
+        ownerEmail: owner?.email || "",
+        broughtBy: admission.brought_by || "",
+        
+        // Pet information
+        species: petData.species,
+        gender: petData.gender as "male" | "female",
+        age: petData.age || undefined,
+        weight: petData.weight || undefined,
+        color: petData.color || "",
+        breed: petData.breed || "",
+        
+        // Admission details
+        admissionDate: new Date(admission.admission_date),
+        cageId: admission.cage_id || "",
+        reason: admission.reason,
+        
+        // Medical information
+        xrayDate: admission.xray_date ? new Date(admission.xray_date) : undefined,
+        operationDate: admission.operation_date ? new Date(admission.operation_date) : undefined,
+        antibioticDay1: antibiotics?.day1 || "",
+        antibioticDay2: antibiotics?.day2 || "",
+        antibioticDay3: antibiotics?.day3 || "",
+        antibioticDay5: antibiotics?.day5 || "",
+        bloodTestReport: admission.blood_test_report || "",
+        
+        // Payment
+        paymentReceived: admission.payment_received || 0,
+      });
+    }
+  }, [petData, form]);
 
   // Fetch available cages
   const { data: cages } = useQuery({
