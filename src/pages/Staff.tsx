@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Key } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -205,6 +205,42 @@ const Staff = () => {
     setDeleteDialogOpen(true);
   };
 
+  const createAuthMutation = useMutation({
+    mutationFn: async ({ staffId, email, name }: { staffId: string; email: string; name: string }) => {
+      const password = prompt(`Enter password for ${email}:`);
+      if (!password) throw new Error("Password is required");
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          staffId,
+          email,
+          password,
+          fullName: name,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to create auth account');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      toast({ title: "Login account created successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error creating login account",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -272,6 +308,20 @@ const Staff = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
+                        {!member.user_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => createAuthMutation.mutate({ 
+                              staffId: member.id, 
+                              email: member.email, 
+                              name: member.name 
+                            })}
+                            title="Create login account"
+                          >
+                            <Key className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
