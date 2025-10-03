@@ -55,9 +55,31 @@ const Staff = () => {
 
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
+      let userId = null;
+      
+      // Create auth user if password is provided
+      if (values.password && values.phone) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          phone: values.phone,
+          password: values.password,
+          options: {
+            data: {
+              full_name: values.name,
+            },
+          },
+        });
+        
+        if (authError) throw new Error(`Authentication error: ${authError.message}`);
+        userId = authData.user?.id;
+      }
+      
+      // Remove password from staff data
+      const { password, ...staffData } = values;
+      
+      // Insert staff record with user_id if created
       const { data, error } = await supabase
         .from("staff")
-        .insert([values])
+        .insert([{ ...staffData, user_id: userId }])
         .select()
         .single();
       if (error) throw error;

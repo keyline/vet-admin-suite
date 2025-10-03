@@ -33,10 +33,11 @@ import { supabase } from "@/integrations/supabase/client";
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().optional(),
+  phone: z.string().min(10, "Phone number is required for login"),
   staff_type_id: z.string().optional(),
   specialization: z.string().optional(),
   license_number: z.string().optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
   active: z.boolean().default(true),
 });
 
@@ -80,6 +81,7 @@ export function StaffDialog({
       staff_type_id: staff?.staff_type_id || "",
       specialization: staff?.specialization || "",
       license_number: staff?.license_number || "",
+      password: "",
       active: staff?.active ?? true,
     },
   });
@@ -133,12 +135,27 @@ export function StaffDialog({
                 <FormItem>
                   <FormLabel>Phone</FormLabel>
                   <FormControl>
-                    <Input placeholder="Phone number" {...field} />
+                    <Input placeholder="+1234567890" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            {!staff && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Login password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="staff_type_id"
