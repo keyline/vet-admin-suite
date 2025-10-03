@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -10,8 +11,8 @@ import {
   Receipt,
   Package,
   Heart,
-  Settings,
   LogOut,
+  ChevronDown,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,21 +27,26 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Pet Owners", url: "/owners", icon: Users },
-  { title: "Pets", url: "/pets", icon: PawPrint },
   { title: "Admissions", url: "/admissions", icon: ClipboardList },
   { title: "Doctor Visits", url: "/visits", icon: Stethoscope },
-  { title: "Medicines", url: "/medicines", icon: Pill },
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Billing", url: "/billing", icon: Receipt },
 ];
 
 const masterItems = [
+  { title: "Pets", url: "/pets", icon: PawPrint },
+  { title: "Medicines", url: "/medicines", icon: Pill },
   { title: "Buildings", url: "/masters/buildings", icon: Building2 },
   { title: "Staff", url: "/masters/staff", icon: Users },
   { title: "Treatments", url: "/masters/treatments", icon: Heart },
@@ -53,6 +59,9 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  
+  const [mainMenuOpen, setMainMenuOpen] = useState(true);
+  const [masterDataOpen, setMasterDataOpen] = useState(true);
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -70,41 +79,59 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Main Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <Collapsible open={mainMenuOpen} onOpenChange={setMainMenuOpen}>
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className={`cursor-pointer ${collapsed ? "sr-only" : "flex items-center justify-between"}`}>
+                <span>Main Menu</span>
+                {!collapsed && <ChevronDown className={`h-4 w-4 transition-transform ${mainMenuOpen ? "" : "-rotate-90"}`} />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navigationItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={item.url} end className={getNavCls}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Master Data</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {masterItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <Collapsible open={masterDataOpen} onOpenChange={setMasterDataOpen}>
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className={`cursor-pointer ${collapsed ? "sr-only" : "flex items-center justify-between"}`}>
+                <span>Master Data</span>
+                {!collapsed && <ChevronDown className={`h-4 w-4 transition-transform ${masterDataOpen ? "" : "-rotate-90"}`} />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {masterItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={item.url} end className={getNavCls}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
