@@ -30,7 +30,7 @@ const admissionFormSchema = z.object({
   broughtBy: z.string().optional(),
   
   // Pet information
-  petName: z.string().min(1, "Pet name is required"),
+  petName: z.string().optional(),
   species: z.string().min(1, "Species is required"),
   gender: z.enum(["male", "female"], { required_error: "Gender is required" }),
   age: z.number().min(0).optional(),
@@ -137,7 +137,7 @@ const Admissions = () => {
       const { data: pet, error: petError } = await supabase
         .from("pets")
         .insert({
-          name: values.petName,
+          name: values.petName || "Unknown",
           owner_id: ownerId,
           species: values.species,
           gender: values.gender,
@@ -369,20 +369,6 @@ const Admissions = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="petName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Pet Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Pet name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   <FormField
                     control={form.control}
                     name="species"
