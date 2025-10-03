@@ -173,7 +173,7 @@ const Admissions = () => {
       
       if (error) throw error;
       
-      // Get current count for each cage to display occupancy
+      // Get current count for each cage and filter by availability
       const cagesWithCount = await Promise.all(
         (data || []).map(async (cage) => {
           const { data: currentCount } = await supabase.rpc(
@@ -188,7 +188,8 @@ const Admissions = () => {
         })
       );
       
-      return cagesWithCount;
+      // Only return cages that are not fully occupied
+      return cagesWithCount.filter(cage => cage.current_count < cage.max_pet_count);
     },
   });
 
