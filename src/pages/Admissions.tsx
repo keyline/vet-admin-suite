@@ -242,7 +242,24 @@ const Admissions = () => {
         .eq("staff_types.role_mapping", "doctor")
         .order("name");
       if (error) throw error;
-      return data;
+      
+      // Get count of pets assigned to each doctor
+      const doctorsWithCount = await Promise.all(
+        (data || []).map(async (doctor) => {
+          const { count } = await supabase
+            .from("admissions")
+            .select("*", { count: "exact", head: true })
+            .eq("doctor_id", doctor.id)
+            .in("status", ["admitted", "pending"]);
+          
+          return {
+            ...doctor,
+            pet_count: count || 0,
+          };
+        })
+      );
+      
+      return doctorsWithCount;
     },
   });
 
@@ -526,20 +543,33 @@ const Admissions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Assign to Doctor</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a doctor (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-popover z-50">
-                          {doctors?.map((doctor) => (
-                            <SelectItem key={doctor.id} value={doctor.id}>
-                              {doctor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a doctor (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover z-50">
+                            {doctors?.map((doctor) => (
+                              <SelectItem key={doctor.id} value={doctor.id}>
+                                {doctor.name} ({doctor.pet_count} pets)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {field.value && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-8 top-0 h-full px-2 hover:bg-transparent"
+                            onClick={() => field.onChange("")}
+                          >
+                            ✕
+                          </Button>
+                        )}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
