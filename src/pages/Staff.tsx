@@ -40,7 +40,13 @@ const Staff = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("staff")
-        .select("*")
+        .select(`
+          *,
+          staff_types (
+            id,
+            name
+          )
+        `)
         .order("name");
       if (error) throw error;
       return data;
@@ -177,6 +183,7 @@ const Staff = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Staff Type</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Specialization</TableHead>
@@ -189,6 +196,9 @@ const Staff = () => {
                   {staff.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell>
+                        {member.staff_types?.name || "-"}
+                      </TableCell>
                       <TableCell>{member.email || "-"}</TableCell>
                       <TableCell>{member.phone || "-"}</TableCell>
                       <TableCell>{member.specialization || "-"}</TableCell>

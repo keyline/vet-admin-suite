@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,11 +21,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().optional(),
+  staff_type_id: z.string().optional(),
   specialization: z.string().optional(),
   license_number: z.string().optional(),
   active: z.boolean().default(true),
@@ -47,12 +57,27 @@ export function StaffDialog({
   onSubmit,
   isLoading,
 }: StaffDialogProps) {
+  const { data: staffTypes } = useQuery({
+    queryKey: ["staff-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff_types")
+        .select("*")
+        .eq("active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),
     defaultValues: {
       name: staff?.name || "",
       email: staff?.email || "",
       phone: staff?.phone || "",
+      staff_type_id: staff?.staff_type_id || "",
       specialization: staff?.specialization || "",
       license_number: staff?.license_number || "",
       active: staff?.active ?? true,
@@ -110,6 +135,30 @@ export function StaffDialog({
                   <FormControl>
                     <Input placeholder="Phone number" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="staff_type_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Staff Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select staff type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {staffTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

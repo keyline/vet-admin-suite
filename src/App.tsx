@@ -11,6 +11,7 @@ import Owners from "./pages/Owners";
 import Pets from "./pages/Pets";
 import Buildings from "./pages/Buildings";
 import Staff from "./pages/Staff";
+import StaffTypes from "./pages/StaffTypes";
 import Treatments from "./pages/Treatments";
 import Medicines from "./pages/Medicines";
 import PetTypes from "./pages/PetTypes";
@@ -65,6 +66,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Staff />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/staff-types"
+              element={
+                <ProtectedRoute>
+                  <StaffTypes />
                 </ProtectedRoute>
               }
             />

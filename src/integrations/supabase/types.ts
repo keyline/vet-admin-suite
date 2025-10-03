@@ -891,6 +891,7 @@ export type Database = {
           name: string
           phone: string | null
           specialization: string | null
+          staff_type_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -903,6 +904,7 @@ export type Database = {
           name: string
           phone?: string | null
           specialization?: string | null
+          staff_type_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -915,8 +917,44 @@ export type Database = {
           name?: string
           phone?: string | null
           specialization?: string | null
+          staff_type_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_staff_type_id_fkey"
+            columns: ["staff_type_id"]
+            isOneToOne: false
+            referencedRelation: "staff_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_types: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
