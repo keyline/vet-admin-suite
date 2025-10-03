@@ -48,6 +48,7 @@ const Pets = () => {
           )
         `)
         .eq("removed", false)
+        .neq("species", "donation")
         .order("name");
 
       if (error) throw error;
