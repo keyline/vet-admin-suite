@@ -86,8 +86,8 @@ const Dashboard = () => {
     },
     {
       title: "Occupied Cages",
-      value: isCagesLoading ? <Skeleton className="h-8 w-16" /> : `${cageStats?.occupied || 0}/${cageStats?.total || 0}`,
-      description: "Available cages",
+      value: isCagesLoading ? <Skeleton className="h-8 w-24" /> : `${cageStats?.occupied || 0}/${cageStats?.totalCapacity || 0}`,
+      description: "Pets in cages / Total capacity",
       icon: Bed,
       color: "text-warning",
     },
