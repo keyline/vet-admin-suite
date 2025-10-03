@@ -112,7 +112,6 @@ const Pets = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
                     <TableHead>Tag Number</TableHead>
                     <TableHead>Owner</TableHead>
                     <TableHead>Species</TableHead>
@@ -132,8 +131,7 @@ const Pets = () => {
                     
                     return (
                       <TableRow key={pet.id}>
-                        <TableCell className="font-medium">{pet.name}</TableCell>
-                        <TableCell>{pet.microchip_id || "-"}</TableCell>
+                        <TableCell className="font-medium">{pet.microchip_id || "-"}</TableCell>
                         <TableCell>{pet.pet_owners?.name || "-"}</TableCell>
                         <TableCell>{pet.species}</TableCell>
                         <TableCell>{pet.breed || "-"}</TableCell>
