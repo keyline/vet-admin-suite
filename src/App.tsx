@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Owners from "./pages/Owners";
 import Pets from "./pages/Pets";
 import Buildings from "./pages/Buildings";
+import Rooms from "./pages/Rooms";
+import Cages from "./pages/Cages";
 import Staff from "./pages/Staff";
 import StaffTypes from "./pages/StaffTypes";
 import Treatments from "./pages/Treatments";
@@ -58,6 +60,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Buildings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/rooms"
+              element={
+                <ProtectedRoute>
+                  <Rooms />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/cages"
+              element={
+                <ProtectedRoute>
+                  <Cages />
                 </ProtectedRoute>
               }
             />

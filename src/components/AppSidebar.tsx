@@ -48,6 +48,8 @@ const masterItems = [
   { title: "Pets", url: "/pets", icon: PawPrint },
   { title: "Medicines", url: "/medicines", icon: Pill },
   { title: "Buildings", url: "/masters/buildings", icon: Building2 },
+  { title: "Rooms", url: "/masters/rooms", icon: Building2 },
+  { title: "Cages", url: "/masters/cages", icon: Building2 },
   { title: "Staff", url: "/masters/staff", icon: Users },
   { title: "Staff Types", url: "/masters/staff-types", icon: Users },
   { title: "Treatments", url: "/masters/treatments", icon: Heart },

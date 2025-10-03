@@ -253,6 +253,7 @@ export type Database = {
           cage_number: string
           created_at: string
           id: string
+          name: string | null
           notes: string | null
           room_id: string
           size: string | null
@@ -264,6 +265,7 @@ export type Database = {
           cage_number: string
           created_at?: string
           id?: string
+          name?: string | null
           notes?: string | null
           room_id: string
           size?: string | null
@@ -275,6 +277,7 @@ export type Database = {
           cage_number?: string
           created_at?: string
           id?: string
+          name?: string | null
           notes?: string | null
           room_id?: string
           size?: string | null
@@ -849,6 +852,7 @@ export type Database = {
           floor: number | null
           id: string
           name: string
+          room_number: string | null
           updated_at: string
         }
         Insert: {
@@ -859,6 +863,7 @@ export type Database = {
           floor?: number | null
           id?: string
           name: string
+          room_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -869,6 +874,7 @@ export type Database = {
           floor?: number | null
           id?: string
           name?: string
+          room_number?: string | null
           updated_at?: string
         }
         Relationships: [
