@@ -32,6 +32,7 @@ const admissionFormSchema = z.object({
   
   // Pet information
   petName: z.string().optional(),
+  tagNumber: z.string().trim().max(50, "Tag number must be less than 50 characters").optional(),
   species: z.string().min(1, "Species is required"),
   gender: z.enum(["male", "female"], { required_error: "Gender is required" }),
   age: z.number().min(0).optional(),
@@ -135,6 +136,7 @@ const Admissions = () => {
         broughtBy: admission.brought_by || "",
         
         // Pet information
+        tagNumber: petData.microchip_id || "",
         species: petData.species,
         gender: petData.gender as "male" | "female",
         age: petData.age || undefined,
@@ -352,6 +354,7 @@ const Admissions = () => {
         const { error: petError } = await supabase
           .from("pets")
           .update({
+            microchip_id: values.tagNumber || null,
             species: values.species,
             gender: values.gender,
             age: values.age,
@@ -370,6 +373,7 @@ const Admissions = () => {
           .insert({
             name: values.petName || "Unknown",
             owner_id: ownerId,
+            microchip_id: values.tagNumber || null,
             species: values.species,
             gender: values.gender,
             age: values.age,
@@ -679,6 +683,20 @@ const Admissions = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="tagNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tag No.</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Tag number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="species"
