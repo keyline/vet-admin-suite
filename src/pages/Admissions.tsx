@@ -173,8 +173,8 @@ const Admissions = () => {
       
       if (error) throw error;
       
-      // Filter cages that have space (current count < max count)
-      const availableCages = await Promise.all(
+      // Get current count for each cage to display occupancy
+      const cagesWithCount = await Promise.all(
         (data || []).map(async (cage) => {
           const { data: currentCount } = await supabase.rpc(
             'get_cage_current_pet_count',
@@ -184,13 +184,11 @@ const Admissions = () => {
           return {
             ...cage,
             current_count: currentCount || 0,
-            has_space: (currentCount || 0) < cage.max_pet_count
           };
         })
       );
       
-      // Only return cages that have space
-      return availableCages.filter(cage => cage.has_space);
+      return cagesWithCount;
     },
   });
 
