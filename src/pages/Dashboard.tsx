@@ -1,26 +1,84 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PawPrint, Users, Bed, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
+  // Fetch total pets (excluding expired and returned to owner)
+  const { data: totalPets, isLoading: isPetsLoading } = useQuery({
+    queryKey: ["dashboard-pets"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("pets")
+        .select("*", { count: "exact", head: true })
+        .or("removed.eq.false,and(removed.eq.true,removal_reason.eq.Cured)");
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch pet owners
+  const { data: totalOwners, isLoading: isOwnersLoading } = useQuery({
+    queryKey: ["dashboard-owners"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("pet_owners")
+        .select("*", { count: "exact", head: true })
+        .eq("active", true);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch cage statistics
+  const { data: cageStats, isLoading: isCagesLoading } = useQuery({
+    queryKey: ["dashboard-cages"],
+    queryFn: async () => {
+      const { data: cages, error } = await supabase
+        .from("cages")
+        .select("id, max_pet_count")
+        .eq("active", true);
+      
+      if (error) throw error;
+
+      const totalCapacity = cages?.reduce((sum, cage) => sum + cage.max_pet_count, 0) || 0;
+      
+      // Get count of occupied cages
+      const { count: occupiedCount } = await supabase
+        .from("admissions")
+        .select("cage_id", { count: "exact", head: true })
+        .not("cage_id", "is", null)
+        .in("status", ["admitted", "pending"]);
+      
+      return {
+        occupied: occupiedCount || 0,
+        total: cages?.length || 0,
+      };
+    },
+  });
+
   const stats = [
     {
       title: "Total Pets",
-      value: "0",
-      description: "Registered pets",
+      value: isPetsLoading ? <Skeleton className="h-8 w-16" /> : totalPets?.toString() || "0",
+      description: "Currently in shelter",
       icon: PawPrint,
       color: "text-primary",
     },
     {
       title: "Pet Owners",
-      value: "0",
+      value: isOwnersLoading ? <Skeleton className="h-8 w-16" /> : totalOwners?.toString() || "0",
       description: "Active owners",
       icon: Users,
       color: "text-accent",
     },
     {
       title: "Occupied Cages",
-      value: "0/0",
+      value: isCagesLoading ? <Skeleton className="h-8 w-16" /> : `${cageStats?.occupied || 0}/${cageStats?.total || 0}`,
       description: "Available cages",
       icon: Bed,
       color: "text-warning",
