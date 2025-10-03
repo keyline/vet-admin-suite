@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -67,6 +69,8 @@ const Admissions = () => {
   const petId = searchParams.get("petId");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [displayTagNumber, setDisplayTagNumber] = useState<string>("");
+  const [showReceiptDialog, setShowReceiptDialog] = useState(false);
+  const [receiptPdfUrl, setReceiptPdfUrl] = useState<string | null>(null);
 
   const form = useForm<AdmissionFormValues>({
     resolver: zodResolver(admissionFormSchema),
@@ -266,6 +270,47 @@ const Admissions = () => {
       return doctorsWithCount;
     },
   });
+
+  const generateDonationReceipt = async (
+    ownerName: string,
+    ownerAddress: string,
+    amount: number,
+    admissionNumber: string
+  ) => {
+    const doc = new jsPDF();
+    
+    // Add content to PDF
+    doc.setFontSize(20);
+    doc.text("Donation Receipt", 105, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Receipt Number: ${admissionNumber}`, 20, 40);
+    doc.text(`Date: ${format(new Date(), "PPP")}`, 20, 50);
+    
+    doc.setFontSize(14);
+    doc.text("Donor Information:", 20, 70);
+    doc.setFontSize(12);
+    doc.text(`Name: ${ownerName}`, 20, 80);
+    doc.text(`Address: ${ownerAddress}`, 20, 90);
+    
+    doc.setFontSize(14);
+    doc.text("Donation Details:", 20, 110);
+    doc.setFontSize(12);
+    doc.text(`Amount Received: ₹${amount.toFixed(2)}`, 20, 120);
+    
+    doc.setFontSize(10);
+    doc.text("Thank you for your generous donation to our veterinary shelter.", 20, 150);
+    doc.text("This receipt serves as confirmation of your contribution.", 20, 160);
+    
+    // Generate blob URL for preview
+    const pdfBlob = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    setReceiptPdfUrl(pdfUrl);
+    setShowReceiptDialog(true);
+    
+    // Return the blob for storage
+    return pdfBlob;
+  };
 
   const onSubmit = async (values: AdmissionFormValues) => {
     try {
@@ -477,10 +522,31 @@ const Admissions = () => {
           .eq("id", values.cageId);
       }
 
+      // 6. Generate donation receipt if applicable
+      if (!values.unknownOwner && values.ownerName && values.ownerAddress && values.paymentReceived && values.paymentReceived > 0) {
+        try {
+          // Generate admission number for receipt (you may want to fetch the actual admission number)
+          const receiptNumber = `RCP-${format(new Date(), "yyMMdd")}-${Math.floor(Math.random() * 10000)}`;
+          await generateDonationReceipt(
+            values.ownerName,
+            values.ownerAddress,
+            values.paymentReceived,
+            receiptNumber
+          );
+        } catch (receiptError) {
+          console.error("Error generating receipt:", receiptError);
+          toast.error("Failed to generate donation receipt, but admission was saved");
+        }
+      }
+
       toast.success(isEditMode ? "Admission updated successfully" : "Admission created successfully");
       queryClient.invalidateQueries({ queryKey: ["admissions"] });
       queryClient.invalidateQueries({ queryKey: ["pets"] });
-      navigate("/pets");
+      
+      // Don't navigate immediately if showing receipt dialog
+      if (!showReceiptDialog) {
+        navigate("/pets");
+      }
     } catch (error: any) {
       console.error("Error saving admission:", error);
       toast.error(error.message || "Failed to save admission");
@@ -1060,6 +1126,8 @@ const Admissions = () => {
                           step="0.01"
                           placeholder="0.00"
                           {...field}
+                          disabled={unknownOwner}
+                          className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                         />
                       </FormControl>
@@ -1087,6 +1155,52 @@ const Admissions = () => {
             </div>
           </form>
         </Form>
+
+        {/* Receipt Dialog */}
+        <Dialog open={showReceiptDialog} onOpenChange={(open) => {
+          setShowReceiptDialog(open);
+          if (!open) {
+            if (receiptPdfUrl) URL.revokeObjectURL(receiptPdfUrl);
+            navigate("/pets");
+          }
+        }}>
+          <DialogContent className="max-w-3xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Donation Receipt</DialogTitle>
+            </DialogHeader>
+            <div className="w-full h-[70vh]">
+              {receiptPdfUrl && (
+                <iframe
+                  src={receiptPdfUrl}
+                  className="w-full h-full border rounded"
+                  title="Donation Receipt"
+                />
+              )}
+            </div>
+            <div className="flex gap-4 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (receiptPdfUrl) {
+                    const link = document.createElement("a");
+                    link.href = receiptPdfUrl;
+                    link.download = `donation-receipt-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+                    link.click();
+                  }
+                }}
+              >
+                Download Receipt
+              </Button>
+              <Button onClick={() => {
+                setShowReceiptDialog(false);
+                if (receiptPdfUrl) URL.revokeObjectURL(receiptPdfUrl);
+                navigate("/pets");
+              }}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
