@@ -1053,7 +1053,7 @@ const Admissions = () => {
                   name="paymentReceived"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Received</FormLabel>
+                      <FormLabel>Donation Received</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
