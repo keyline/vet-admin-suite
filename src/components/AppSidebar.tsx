@@ -38,6 +38,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Pet Owners", url: "/owners", icon: Users },
+  { title: "Pets", url: "/pets", icon: PawPrint },
   { title: "Admissions", url: "/admissions", icon: ClipboardList },
   { title: "Doctor Visits", url: "/visits", icon: Stethoscope },
   { title: "Inventory", url: "/inventory", icon: Package },
@@ -45,7 +46,6 @@ const navigationItems = [
 ];
 
 const masterItems = [
-  { title: "Pets", url: "/pets", icon: PawPrint },
   { title: "Medicines", url: "/medicines", icon: Pill },
   { title: "Buildings", url: "/masters/buildings", icon: Building2 },
   { title: "Rooms", url: "/masters/rooms", icon: Building2 },
