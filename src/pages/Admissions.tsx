@@ -23,8 +23,9 @@ import { cn } from "@/lib/utils";
 
 const admissionFormSchema = z.object({
   // Owner information
-  ownerName: z.string().min(1, "Owner name is required"),
-  ownerPhone: z.string().min(1, "Phone number is required"),
+  unknownOwner: z.boolean().default(false),
+  ownerName: z.string().optional(),
+  ownerPhone: z.string().optional(),
   ownerAddress: z.string().optional(),
   ownerEmail: z.string().email().optional().or(z.literal("")),
   broughtBy: z.string().optional(),
@@ -69,8 +70,11 @@ const Admissions = () => {
       admissionDate: new Date(),
       gender: "male",
       paymentReceived: 0,
+      unknownOwner: false,
     },
   });
+
+  const unknownOwner = form.watch("unknownOwner");
 
   // Fetch available cages
   const { data: cages } = useQuery({
@@ -101,6 +105,20 @@ const Admissions = () => {
     },
   });
 
+  // Fetch staff
+  const { data: staff } = useQuery({
+    queryKey: ["staff"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const onSubmit = async (values: AdmissionFormValues) => {
     try {
       setIsSubmitting(true);
@@ -114,37 +132,54 @@ const Admissions = () => {
 
       // 1. Create or find owner
       let ownerId: string;
-      const { data: existingOwner } = await supabase
-        .from("pet_owners")
-        .select("id")
-        .eq("phone", values.ownerPhone)
-        .maybeSingle();
-
-      if (existingOwner) {
-        ownerId = existingOwner.id;
-        // Update owner information
-        await supabase
-          .from("pet_owners")
-          .update({
-            name: values.ownerName,
-            address: values.ownerAddress,
-            email: values.ownerEmail || null,
-          })
-          .eq("id", ownerId);
-      } else {
-        const { data: newOwner, error: ownerError } = await supabase
+      
+      if (values.unknownOwner) {
+        // Create a generic unknown owner entry
+        const { data: unknownOwnerData, error: unknownOwnerError } = await supabase
           .from("pet_owners")
           .insert({
-            name: values.ownerName,
-            phone: values.ownerPhone,
-            address: values.ownerAddress,
-            email: values.ownerEmail || null,
+            name: "Unknown Owner",
+            phone: "0000000000",
+            address: "Unknown",
           })
           .select()
           .single();
 
-        if (ownerError) throw ownerError;
-        ownerId = newOwner.id;
+        if (unknownOwnerError) throw unknownOwnerError;
+        ownerId = unknownOwnerData.id;
+      } else {
+        const { data: existingOwner } = await supabase
+          .from("pet_owners")
+          .select("id")
+          .eq("phone", values.ownerPhone!)
+          .maybeSingle();
+
+        if (existingOwner) {
+          ownerId = existingOwner.id;
+          // Update owner information
+          await supabase
+            .from("pet_owners")
+            .update({
+              name: values.ownerName!,
+              address: values.ownerAddress,
+              email: values.ownerEmail || null,
+            })
+            .eq("id", ownerId);
+        } else {
+          const { data: newOwner, error: ownerError } = await supabase
+            .from("pet_owners")
+            .insert({
+              name: values.ownerName!,
+              phone: values.ownerPhone!,
+              address: values.ownerAddress,
+              email: values.ownerEmail || null,
+            })
+            .select()
+            .single();
+
+          if (ownerError) throw ownerError;
+          ownerId = newOwner.id;
+        }
       }
 
       // 2. Create pet
@@ -304,12 +339,37 @@ const Admissions = () => {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="unknownOwner"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4 mt-1"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Unknown Owner</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="ownerName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Admitted By *</FormLabel>
+                      <FormLabel>Admitted By</FormLabel>
                       <FormControl>
-                        <Input placeholder="Owner name" {...field} />
+                        <Input 
+                          placeholder="Owner name" 
+                          {...field} 
+                          disabled={unknownOwner}
+                          className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -323,7 +383,12 @@ const Admissions = () => {
                     <FormItem>
                       <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="Address" {...field} />
+                        <Input 
+                          placeholder="Address" 
+                          {...field} 
+                          disabled={unknownOwner}
+                          className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -336,9 +401,14 @@ const Admissions = () => {
                     name="ownerPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mobile *</FormLabel>
+                        <FormLabel>Mobile</FormLabel>
                         <FormControl>
-                          <Input placeholder="Phone number" {...field} />
+                          <Input 
+                            placeholder="Phone number" 
+                            {...field} 
+                            disabled={unknownOwner}
+                            className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -352,7 +422,13 @@ const Admissions = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Email (optional)" {...field} />
+                          <Input 
+                            type="email" 
+                            placeholder="Email (optional)" 
+                            {...field} 
+                            disabled={unknownOwner}
+                            className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -366,9 +442,20 @@ const Admissions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brought to the Shelter By</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Person who brought the animal" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select staff member" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {staff?.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
