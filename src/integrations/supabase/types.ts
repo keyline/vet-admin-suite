@@ -976,6 +976,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_first_superadmin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_admission_number: {
         Args: Record<PropertyKey, never>
         Returns: string

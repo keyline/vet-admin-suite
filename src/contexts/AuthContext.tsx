@@ -29,6 +29,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Defer any Supabase calls to avoid deadlocks
+      if (session?.user) {
+        setTimeout(() => {
+          (async () => {
+            try {
+              await supabase.rpc("ensure_first_superadmin");
+            } catch (_) {}
+          })();
+        }, 0);
+      }
     });
 
     // Check for existing session
@@ -36,6 +47,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        (async () => {
+          try {
+            await supabase.rpc("ensure_first_superadmin");
+          } catch (_) {}
+        })();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -49,6 +67,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
+
+      // Ensure initial admin bootstrap if roles are empty
+      try {
+        await supabase.rpc("ensure_first_superadmin");
+      } catch (_) {}
 
       toast.success("Welcome back!");
       navigate("/dashboard");
@@ -75,6 +98,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
+
+      try {
+        await supabase.rpc("ensure_first_superadmin");
+      } catch (_) {}
 
       toast.success("Account created successfully!");
       navigate("/dashboard");
