@@ -46,7 +46,9 @@ const medicineSchema = z.object({
   manufacturer: z.string().optional(),
   category: z.string().optional(),
   unit: z.string().min(1, "Unit is required"),
-  unit_price: z.coerce.number().min(0, "Price must be positive"),
+  packaging: z.string().optional(),
+  units_per_package: z.coerce.number().int().min(1, "Units per package must be at least 1").default(1),
+  price_per_package: z.coerce.number().min(0, "Price must be positive"),
   stock_quantity: z.coerce.number().int().min(0, "Quantity must be positive"),
   reorder_level: z.coerce.number().int().min(0, "Reorder level must be positive"),
   notes: z.string().optional(),
@@ -121,7 +123,9 @@ export function MedicineDialog({
       manufacturer: medicine?.manufacturer || "",
       category: medicine?.category || "",
       unit: medicine?.unit || "",
-      unit_price: medicine?.unit_price || 0,
+      packaging: medicine?.packaging || "",
+      units_per_package: medicine?.units_per_package || 1,
+      price_per_package: medicine?.price_per_package || 0,
       stock_quantity: medicine?.stock_quantity || 0,
       reorder_level: medicine?.reorder_level || 10,
       notes: medicine?.notes || "",
@@ -329,10 +333,38 @@ export function MedicineDialog({
               />
               <FormField
                 control={form.control}
-                name="unit_price"
+                name="packaging"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Price (₹)</FormLabel>
+                    <FormLabel>Packaging</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Box, Bottle, Strip" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="units_per_package"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units per Package</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="price_per_package"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price per Package (₹)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="0.00" {...field} />
                     </FormControl>

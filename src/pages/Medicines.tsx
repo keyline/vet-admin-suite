@@ -186,8 +186,9 @@ const Medicines = () => {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Packaging</TableHead>
                     <TableHead>Stock</TableHead>
-                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Price/Package</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -210,11 +211,19 @@ const Medicines = () => {
                       </TableCell>
                       <TableCell>{medicine.category || "-"}</TableCell>
                       <TableCell>
+                        {medicine.packaging || "-"}
+                        {medicine.units_per_package && medicine.units_per_package > 1 && (
+                          <div className="text-sm text-muted-foreground">
+                            {medicine.units_per_package} {medicine.unit}/pkg
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <span className={isLowStock(medicine) ? "text-warning font-medium" : ""}>
                           {medicine.stock_quantity} {medicine.unit}
                         </span>
                       </TableCell>
-                      <TableCell>₹{Number(medicine.unit_price).toFixed(2)}</TableCell>
+                      <TableCell>₹{Number(medicine.price_per_package).toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge variant={medicine.active ? "default" : "secondary"}>
                           {medicine.active ? "Active" : "Inactive"}

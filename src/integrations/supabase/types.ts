@@ -549,10 +549,13 @@ export type Database = {
           manufacturer: string | null
           name: string
           notes: string | null
+          packaging: string | null
+          price_per_package: number | null
           reorder_level: number
           stock_quantity: number
           unit: string
           unit_price: number
+          units_per_package: number | null
           updated_at: string
         }
         Insert: {
@@ -565,10 +568,13 @@ export type Database = {
           manufacturer?: string | null
           name: string
           notes?: string | null
+          packaging?: string | null
+          price_per_package?: number | null
           reorder_level?: number
           stock_quantity?: number
           unit: string
           unit_price?: number
+          units_per_package?: number | null
           updated_at?: string
         }
         Update: {
@@ -581,10 +587,13 @@ export type Database = {
           manufacturer?: string | null
           name?: string
           notes?: string | null
+          packaging?: string | null
+          price_per_package?: number | null
           reorder_level?: number
           stock_quantity?: number
           unit?: string
           unit_price?: number
+          units_per_package?: number | null
           updated_at?: string
         }
         Relationships: []
