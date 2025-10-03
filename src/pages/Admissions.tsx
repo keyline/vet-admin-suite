@@ -42,6 +42,7 @@ const admissionFormSchema = z.object({
   // Admission details
   admissionDate: z.date(),
   cageId: z.string().optional(),
+  doctorId: z.string().optional(),
   reason: z.string().min(1, "Reason for admission is required"),
   
   // Medical information
@@ -98,6 +99,7 @@ const Admissions = () => {
             id,
             admission_date,
             cage_id,
+            doctor_id,
             reason,
             brought_by,
             xray_date,
@@ -143,6 +145,7 @@ const Admissions = () => {
         // Admission details
         admissionDate: new Date(admission.admission_date),
         cageId: admission.cage_id || "",
+        doctorId: (admission as any).doctor_id || "",
         reason: admission.reason,
         
         // Medical information
@@ -215,6 +218,28 @@ const Admissions = () => {
         .from("staff")
         .select("id, name")
         .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch doctors only (staff with doctor type)
+  const { data: doctors } = useQuery({
+    queryKey: ["doctors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff")
+        .select(`
+          id,
+          name,
+          staff_types!inner (
+            name,
+            role_mapping
+          )
+        `)
+        .eq("active", true)
+        .eq("staff_types.role_mapping", "doctor")
         .order("name");
       if (error) throw error;
       return data;
@@ -359,6 +384,7 @@ const Admissions = () => {
           .update({
             admission_date: values.admissionDate.toISOString(),
             cage_id: values.cageId || null,
+            doctor_id: values.doctorId || null,
             reason: values.reason,
             brought_by: values.broughtBy === "unknown" ? null : values.broughtBy,
             xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
@@ -378,6 +404,7 @@ const Admissions = () => {
             pet_id: petRecordId,
             admission_date: values.admissionDate.toISOString(),
             cage_id: values.cageId || null,
+            doctor_id: values.doctorId || null,
             admitted_by: null,
             reason: values.reason,
             brought_by: values.broughtBy === "unknown" ? null : values.broughtBy,
@@ -452,7 +479,7 @@ const Admissions = () => {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0 bg-popover z-50" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -479,7 +506,7 @@ const Admissions = () => {
                               <SelectValue placeholder="Select cage (optional)" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-popover z-50">
                             {cages?.map((cage) => (
                               <SelectItem key={cage.id} value={cage.id}>
                                 {cage.cage_number} - {cage.name} ({cage.rooms?.name}) - {cage.current_count}/{cage.max_pet_count}
@@ -492,6 +519,31 @@ const Admissions = () => {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="doctorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign to Doctor</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a doctor (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-popover z-50">
+                          {doctors?.map((doctor) => (
+                            <SelectItem key={doctor.id} value={doctor.id}>
+                              {doctor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

@@ -26,6 +26,7 @@ export type Database = {
           created_at: string
           diagnosis: string | null
           discharge_date: string | null
+          doctor_id: string | null
           id: string
           notes: string | null
           operation_date: string | null
@@ -48,6 +49,7 @@ export type Database = {
           created_at?: string
           diagnosis?: string | null
           discharge_date?: string | null
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           operation_date?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           created_at?: string
           diagnosis?: string | null
           discharge_date?: string | null
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           operation_date?: string | null
@@ -94,6 +97,13 @@ export type Database = {
             columns: ["cage_id"]
             isOneToOne: false
             referencedRelation: "cages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admissions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
           {
