@@ -169,7 +169,7 @@ const DoctorDashboard = () => {
               <Skeleton className="h-32 w-full" />
             </div>
           ) : assignedPets && assignedPets.length > 0 ? (
-            <div className="grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {assignedPets.map((admission: any) => (
                 <Card key={admission.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
