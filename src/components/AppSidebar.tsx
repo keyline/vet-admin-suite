@@ -79,12 +79,17 @@ export function AppSidebar() {
     const fetchPermissions = async () => {
       if (!user) return;
 
+      console.log('[AppSidebar] Fetching permissions for user:', user.id);
+
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
 
+      console.log('[AppSidebar] User roles:', roles);
+
       if (!roles || roles.length === 0) {
+        console.log('[AppSidebar] No roles found for user');
         setUserPermissions(new Set());
         setIsAdmin(false);
         return;
@@ -93,6 +98,7 @@ export function AppSidebar() {
       // Check if user is admin or superadmin
       const adminRole = roles.some(r => r.role === 'admin' || r.role === 'superadmin');
       setIsAdmin(adminRole);
+      console.log('[AppSidebar] Is admin?', adminRole);
 
       if (adminRole) {
         // Admins see everything, no need to fetch permissions
@@ -101,10 +107,14 @@ export function AppSidebar() {
 
       const { data: permissions } = await supabase
         .from('role_permissions')
-        .select('module')
-        .in('role', roles.map(r => r.role));
+        .select('module, permission')
+        .in('role', roles.map(r => r.role))
+        .eq('permission', 'view'); // Only check for view permissions
+
+      console.log('[AppSidebar] Permissions fetched:', permissions);
 
       const permissionSet = new Set(permissions?.map(p => p.module) || []);
+      console.log('[AppSidebar] Permission set:', Array.from(permissionSet));
       setUserPermissions(permissionSet);
     };
 
