@@ -39,7 +39,7 @@ export type Database = {
         }
         Insert: {
           admission_date?: string
-          admission_number: string
+          admission_number?: string
           admitted_by?: string | null
           antibiotics_schedule?: Json | null
           blood_test_report?: string | null

@@ -162,20 +162,20 @@ const Admissions = () => {
       // 4. Create admission with auto-generated admission number
       const { data: admission, error: admissionError } = await supabase
         .from("admissions")
-        .insert({
+        .insert([{
           pet_id: pet.id,
           admission_date: values.admissionDate.toISOString(),
           cage_id: values.cageId || null,
           admitted_by: user.id,
           reason: values.reason,
-          brought_by: values.broughtBy,
+          brought_by: values.broughtBy || null,
           xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
           operation_date: values.operationDate?.toISOString().split('T')[0] || null,
-          antibiotics_schedule: antibioticsSchedule,
-          blood_test_report: values.bloodTestReport,
+          antibiotics_schedule: antibioticsSchedule as any,
+          blood_test_report: values.bloodTestReport || null,
           payment_received: values.paymentReceived || 0,
-          status: "admitted",
-        })
+          status: "admitted" as any,
+        }])
         .select()
         .single();
 
