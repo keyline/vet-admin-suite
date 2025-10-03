@@ -44,7 +44,6 @@ const navigationItems = [
   { title: "Pets", url: "/pets", icon: PawPrint, module: "pets" },
   { title: "Admissions", url: "/admissions", icon: ClipboardList, module: "admissions" },
   { title: "Donations", url: "/donations", icon: Banknote, module: null },
-  { title: "Doctor Visits", url: "/visits", icon: Stethoscope, module: "doctor_visits" },
   { title: "Inventory", url: "/inventory", icon: Package, module: "inventory" },
   { title: "Billing", url: "/billing", icon: Receipt, module: "billing" },
 ];
