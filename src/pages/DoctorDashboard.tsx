@@ -1,9 +1,8 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Stethoscope, ClipboardList, AlertCircle } from "lucide-react";
+import { Stethoscope, ClipboardList, AlertCircle, MapPin, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { TreatmentRecordDialog } from "@/components/doctors/TreatmentRecordDialog";
 import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
@@ -154,56 +154,85 @@ const DoctorDashboard = () => {
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Assigned Pets</CardTitle>
-            <CardDescription>Pets currently under your care</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : assignedPets && assignedPets.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tag Number</TableHead>
-                    <TableHead>Species/Breed</TableHead>
-                    <TableHead>Cage Location</TableHead>
-                    <TableHead>Admission Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assignedPets.map((admission: any) => (
-                    <TableRow key={admission.id}>
-                      <TableCell className="font-medium">
-                        {admission.pets?.microchip_id || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {admission.pets?.species}
-                        {admission.pets?.breed && ` / ${admission.pets.breed}`}
-                      </TableCell>
-                      <TableCell>{getCageLocation(admission.cages)}</TableCell>
-                      <TableCell>
-                        {format(new Date(admission.admission_date), "MMM dd, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            admission.status === "admitted" ? "default" : "secondary"
-                          }
-                        >
-                          {admission.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-semibold">Assigned Pets</h3>
+              <p className="text-sm text-muted-foreground">Pets currently under your care</p>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : assignedPets && assignedPets.length > 0 ? (
+            <div className="grid gap-4">
+              {assignedPets.map((admission: any) => (
+                <Card key={admission.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-semibold text-lg">
+                                {admission.pets?.name || "Unnamed Pet"}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                Tag: {admission.pets?.microchip_id || "N/A"}
+                              </p>
+                            </div>
+                            <Badge
+                              variant={
+                                admission.status === "admitted" ? "default" : "secondary"
+                              }
+                              className="ml-2"
+                            >
+                              {admission.status}
+                            </Badge>
+                          </div>
+
+                          <div className="flex flex-col gap-2 text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Stethoscope className="h-4 w-4" />
+                              <span>
+                                {admission.pets?.species}
+                                {admission.pets?.breed && ` • ${admission.pets.breed}`}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span>{getCageLocation(admission.cages)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                Admitted: {format(new Date(admission.admission_date), "MMM dd, yyyy")}
+                              </span>
+                            </div>
+                          </div>
+
+                          {admission.reason && (
+                            <div className="pt-2 border-t">
+                              <p className="text-sm">
+                                <span className="font-medium">Reason: </span>
+                                {admission.reason}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
-                          size="sm"
+                          className="w-full sm:w-auto"
                           onClick={() =>
                             setSelectedAdmission({
                               id: admission.id,
@@ -212,21 +241,27 @@ const DoctorDashboard = () => {
                             })
                           }
                         >
+                          <ClipboardList className="h-4 w-4 mr-2" />
                           Record Treatment
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No pets currently assigned to you</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">No pets currently assigned to you</p>
+                  <p className="text-sm mt-2">Check back later for new assignments</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
       {selectedAdmission && (
