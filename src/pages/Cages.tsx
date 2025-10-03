@@ -191,7 +191,10 @@ export default function Cages() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(cage.display_status)}>
+                      <Badge 
+                        variant={cage.display_status === 'available' ? 'default' : 'secondary'}
+                        className={cage.display_status === 'available' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      >
                         {cage.display_status}
                       </Badge>
                     </TableCell>
