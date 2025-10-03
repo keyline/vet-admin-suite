@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,10 +35,10 @@ const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone number is required for login"),
-  staff_type_id: z.string().optional(),
-  specialization: z.string().optional(),
-  license_number: z.string().optional(),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  staff_type_id: z.string().optional().or(z.literal("")),
+  specialization: z.string().optional().or(z.literal("")),
+  license_number: z.string().optional().or(z.literal("")),
+  password: z.string().optional().or(z.literal("")),
   active: z.boolean().default(true),
 });
 
@@ -75,20 +76,43 @@ export function StaffDialog({
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),
     defaultValues: {
-      name: staff?.name || "",
-      email: staff?.email || "",
-      phone: staff?.phone || "",
-      staff_type_id: staff?.staff_type_id || "",
-      specialization: staff?.specialization || "",
-      license_number: staff?.license_number || "",
+      name: "",
+      email: "",
+      phone: "",
+      staff_type_id: "",
+      specialization: "",
+      license_number: "",
       password: "",
-      active: staff?.active ?? true,
+      active: true,
     },
   });
 
+  // Reset form when dialog opens with staff data
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        name: staff?.name || "",
+        email: staff?.email || "",
+        phone: staff?.phone || "",
+        staff_type_id: staff?.staff_type_id || "",
+        specialization: staff?.specialization || "",
+        license_number: staff?.license_number || "",
+        password: "",
+        active: staff?.active ?? true,
+      });
+    }
+  }, [open, staff, form]);
+
   const handleSubmit = (values: StaffFormValues) => {
+    // Validate password for new staff
+    if (!staff && (!values.password || values.password.length < 6)) {
+      form.setError("password", {
+        type: "manual",
+        message: "Password must be at least 6 characters for new staff"
+      });
+      return;
+    }
     onSubmit(values);
-    form.reset();
   };
 
   return (

@@ -102,9 +102,12 @@ const Staff = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: any }) => {
+      // Remove password from staff data (can't update auth password here)
+      const { password, ...staffData } = values;
+      
       const { data, error } = await supabase
         .from("staff")
-        .update(values)
+        .update(staffData)
         .eq("id", id)
         .select()
         .single();
@@ -257,7 +260,12 @@ const Staff = () => {
 
       <StaffDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setSelectedStaff(null);
+          }
+        }}
         staff={selectedStaff}
         onSubmit={handleSubmit}
         isLoading={createMutation.isPending || updateMutation.isPending}
