@@ -37,7 +37,7 @@ const Pets = () => {
             id,
             name
           ),
-          admissions (
+          admissions!inner (
             id,
             admission_date,
             cage_id,
@@ -49,6 +49,7 @@ const Pets = () => {
         `)
         .eq("removed", false)
         .neq("species", "donation")
+        .not("admissions.cage_id", "is", null)
         .order("name");
 
       if (error) throw error;
