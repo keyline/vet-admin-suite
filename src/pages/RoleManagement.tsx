@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +100,10 @@ export default function RoleManagement() {
       permission: PermissionType;
       enabled: boolean;
     }) => {
+      if (!selectedRole) {
+        throw new Error("No role mapping found for selected staff type");
+      }
+
       if (enabled) {
         // Add permission
         const { error } = await supabase.from("role_permissions").insert([
