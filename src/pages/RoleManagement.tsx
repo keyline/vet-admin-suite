@@ -14,6 +14,12 @@ type AppModule = "pets" | "owners" | "admissions" | "medicines" | "treatments" |
   "donations" | "purchase_orders" | "doctor_visits";
 type PermissionType = "view" | "add" | "edit" | "delete";
 
+interface StaffType {
+  id: string;
+  name: string;
+  role_mapping: AppRole | null;
+}
+
 const MODULES: { id: AppModule; label: string }[] = [
   { id: "pets", label: "Pets" },
   { id: "owners", label: "Pet Owners" },
@@ -39,22 +45,32 @@ const PERMISSIONS: { id: PermissionType; label: string }[] = [
   { id: "delete", label: "Delete" },
 ];
 
-const ROLES: { id: AppRole; label: string }[] = [
-  { id: "admin", label: "Admin" },
-  { id: "doctor", label: "Doctor" },
-  { id: "receptionist", label: "Receptionist" },
-  { id: "store_keeper", label: "Store Keeper" },
-  { id: "accountant", label: "Accountant" },
-];
-
 export default function RoleManagement() {
   const queryClient = useQueryClient();
-  const [selectedRole, setSelectedRole] = useState<AppRole>(ROLES[0].id);
+  const [selectedStaffTypeId, setSelectedStaffTypeId] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
+
+  // Fetch staff types from database
+  const { data: staffTypes, isLoading: isLoadingStaffTypes } = useQuery({
+    queryKey: ["staff-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff_types")
+        .select("id, name, role_mapping")
+        .eq("active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data as StaffType[];
+    },
+  });
 
   // Fetch permissions for selected role
   const { data: permissions, isLoading } = useQuery({
     queryKey: ["role-permissions", selectedRole],
     queryFn: async () => {
+      if (!selectedRole) return [];
+      
       const { data, error } = await supabase
         .from("role_permissions")
         .select("*")
@@ -63,6 +79,7 @@ export default function RoleManagement() {
       if (error) throw error;
       return data || [];
     },
+    enabled: !!selectedRole,
   });
 
   // Create permission map for easy lookup
@@ -119,7 +136,16 @@ export default function RoleManagement() {
     permission: PermissionType,
     enabled: boolean
   ) => {
+    if (!selectedRole) {
+      toast.error("Please select a staff type with a role mapping");
+      return;
+    }
     updatePermissionMutation.mutate({ module, permission, enabled });
+  };
+
+  const handleStaffTypeSelect = (staffType: StaffType) => {
+    setSelectedStaffTypeId(staffType.id);
+    setSelectedRole(staffType.role_mapping);
   };
 
   return (
@@ -139,35 +165,48 @@ export default function RoleManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Select Role</CardTitle>
-            <CardDescription>Choose a role to manage its permissions</CardDescription>
+            <CardTitle>Select Staff Type</CardTitle>
+            <CardDescription>Choose a staff type to manage its permissions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {ROLES.map((role) => (
-                <Button
-                  key={role.id}
-                  variant={selectedRole === role.id ? "default" : "outline"}
-                  onClick={() => setSelectedRole(role.id)}
-                >
-                  {role.label}
-                </Button>
-              ))}
-            </div>
+            {isLoadingStaffTypes ? (
+              <div className="text-center py-4 text-muted-foreground">
+                Loading staff types...
+              </div>
+            ) : staffTypes && staffTypes.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {staffTypes.map((staffType) => (
+                  <Button
+                    key={staffType.id}
+                    variant={selectedStaffTypeId === staffType.id ? "default" : "outline"}
+                    onClick={() => handleStaffTypeSelect(staffType)}
+                    disabled={!staffType.role_mapping}
+                  >
+                    {staffType.name}
+                    {!staffType.role_mapping && " (No role mapping)"}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                No staff types found. Please add staff types first.
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Permissions for {ROLES.find((r) => r.id === selectedRole)?.label}
-            </CardTitle>
-            <CardDescription>
-              Check or uncheck to grant or revoke permissions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
+        {selectedRole && (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Permissions for {staffTypes?.find((st) => st.id === selectedStaffTypeId)?.name}
+              </CardTitle>
+              <CardDescription>
+                Check or uncheck to grant or revoke permissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Loading permissions...
               </div>
@@ -209,8 +248,9 @@ export default function RoleManagement() {
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

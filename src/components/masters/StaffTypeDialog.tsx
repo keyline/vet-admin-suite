@@ -17,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -28,6 +35,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   active: z.boolean().default(true),
+  role_mapping: z.enum(["admin", "doctor", "receptionist", "store_keeper", "accountant"]).nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,6 +59,7 @@ export function StaffTypeDialog({
       name: "",
       description: "",
       active: true,
+      role_mapping: null,
     },
   });
 
@@ -60,12 +69,14 @@ export function StaffTypeDialog({
         name: staffType.name,
         description: staffType.description || "",
         active: staffType.active,
+        role_mapping: staffType.role_mapping || null,
       });
     } else {
       form.reset({
         name: "",
         description: "",
         active: true,
+        role_mapping: null,
       });
     }
   }, [staffType, form]);
@@ -76,6 +87,7 @@ export function StaffTypeDialog({
         name: data.name,
         description: data.description || null,
         active: data.active,
+        role_mapping: data.role_mapping || null,
       };
 
       if (staffType) {
@@ -143,6 +155,35 @@ export function StaffTypeDialog({
                       value={field.value || ""}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role_mapping"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role Mapping</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value === "none" ? null : value)} 
+                    value={field.value || "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">No Role Mapping</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="receptionist">Receptionist</SelectItem>
+                      <SelectItem value="store_keeper">Store Keeper</SelectItem>
+                      <SelectItem value="accountant">Accountant</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
