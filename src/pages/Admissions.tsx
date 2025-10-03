@@ -87,6 +87,20 @@ const Admissions = () => {
     },
   });
 
+  // Fetch pet types
+  const { data: petTypes } = useQuery({
+    queryKey: ["pet_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pet_types")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const onSubmit = async (values: AdmissionFormValues) => {
     try {
       setIsSubmitting(true);
@@ -375,9 +389,20 @@ const Admissions = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Species *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Dog, Cat" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select species" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {petTypes?.map((type) => (
+                              <SelectItem key={type.id} value={type.name}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
