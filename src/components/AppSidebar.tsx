@@ -155,23 +155,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {isDoctor && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/doctor-dashboard" end className={getNavCls}>
-                      <Stethoscope className="h-4 w-4" />
-                      {!collapsed && <span>My Patients</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
         <Collapsible open={mainMenuOpen} onOpenChange={setMainMenuOpen}>
           <SidebarGroup>
             <CollapsibleTrigger asChild>
