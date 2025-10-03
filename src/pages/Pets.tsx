@@ -93,7 +93,7 @@ const Pets = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Pets</CardTitle>
+            <CardTitle>All Admitted Pets</CardTitle>
             <CardDescription>View and manage pet records</CardDescription>
           </CardHeader>
           <CardContent>
