@@ -1,0 +1,705 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+const admissionFormSchema = z.object({
+  // Owner information
+  ownerName: z.string().min(1, "Owner name is required"),
+  ownerPhone: z.string().min(1, "Phone number is required"),
+  ownerAddress: z.string().optional(),
+  ownerEmail: z.string().email().optional().or(z.literal("")),
+  broughtBy: z.string().optional(),
+  
+  // Pet information
+  petName: z.string().min(1, "Pet name is required"),
+  species: z.string().min(1, "Species is required"),
+  gender: z.enum(["male", "female"], { required_error: "Gender is required" }),
+  age: z.number().min(0).optional(),
+  weight: z.number().min(0).optional(),
+  color: z.string().optional(),
+  breed: z.string().optional(),
+  
+  // Admission details
+  admissionDate: z.date(),
+  cageId: z.string().optional(),
+  reason: z.string().min(1, "Reason for admission is required"),
+  
+  // Medical information
+  xrayDate: z.date().optional(),
+  operationDate: z.date().optional(),
+  antibioticDay1: z.string().optional(),
+  antibioticDay2: z.string().optional(),
+  antibioticDay3: z.string().optional(),
+  antibioticDay5: z.string().optional(),
+  bloodTestReport: z.string().optional(),
+  
+  // Payment
+  paymentReceived: z.number().min(0).optional(),
+});
+
+type AdmissionFormValues = z.infer<typeof admissionFormSchema>;
+
+const Admissions = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<AdmissionFormValues>({
+    resolver: zodResolver(admissionFormSchema),
+    defaultValues: {
+      admissionDate: new Date(),
+      gender: "male",
+      paymentReceived: 0,
+    },
+  });
+
+  // Fetch available cages
+  const { data: cages } = useQuery({
+    queryKey: ["cages", "available"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cages")
+        .select("id, cage_number, name, rooms(name)")
+        .eq("status", "available")
+        .eq("active", true)
+        .order("cage_number");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const onSubmit = async (values: AdmissionFormValues) => {
+    try {
+      setIsSubmitting(true);
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create an admission");
+        return;
+      }
+
+      // 1. Create or find owner
+      let ownerId: string;
+      const { data: existingOwner } = await supabase
+        .from("pet_owners")
+        .select("id")
+        .eq("phone", values.ownerPhone)
+        .maybeSingle();
+
+      if (existingOwner) {
+        ownerId = existingOwner.id;
+        // Update owner information
+        await supabase
+          .from("pet_owners")
+          .update({
+            name: values.ownerName,
+            address: values.ownerAddress,
+            email: values.ownerEmail || null,
+          })
+          .eq("id", ownerId);
+      } else {
+        const { data: newOwner, error: ownerError } = await supabase
+          .from("pet_owners")
+          .insert({
+            name: values.ownerName,
+            phone: values.ownerPhone,
+            address: values.ownerAddress,
+            email: values.ownerEmail || null,
+          })
+          .select()
+          .single();
+
+        if (ownerError) throw ownerError;
+        ownerId = newOwner.id;
+      }
+
+      // 2. Create pet
+      const { data: pet, error: petError } = await supabase
+        .from("pets")
+        .insert({
+          name: values.petName,
+          owner_id: ownerId,
+          species: values.species,
+          gender: values.gender,
+          age: values.age,
+          weight: values.weight,
+          color: values.color,
+          breed: values.breed,
+        })
+        .select()
+        .single();
+
+      if (petError) throw petError;
+
+      // 3. Prepare antibiotics schedule
+      const antibioticsSchedule = {
+        day1: values.antibioticDay1 || null,
+        day2: values.antibioticDay2 || null,
+        day3: values.antibioticDay3 || null,
+        day5: values.antibioticDay5 || null,
+      };
+
+      // 4. Create admission with auto-generated admission number
+      const { data: admission, error: admissionError } = await supabase
+        .from("admissions")
+        .insert({
+          pet_id: pet.id,
+          admission_date: values.admissionDate.toISOString(),
+          cage_id: values.cageId || null,
+          admitted_by: user.id,
+          reason: values.reason,
+          brought_by: values.broughtBy,
+          xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
+          operation_date: values.operationDate?.toISOString().split('T')[0] || null,
+          antibiotics_schedule: antibioticsSchedule,
+          blood_test_report: values.bloodTestReport,
+          payment_received: values.paymentReceived || 0,
+          status: "admitted",
+        })
+        .select()
+        .single();
+
+      if (admissionError) throw admissionError;
+
+      // 5. Update cage status if assigned
+      if (values.cageId) {
+        await supabase
+          .from("cages")
+          .update({ status: "occupied" })
+          .eq("id", values.cageId);
+      }
+
+      toast.success("Admission created successfully");
+      queryClient.invalidateQueries({ queryKey: ["admissions"] });
+      queryClient.invalidateQueries({ queryKey: ["pets"] });
+      navigate("/pets");
+    } catch (error: any) {
+      console.error("Error creating admission:", error);
+      toast.error(error.message || "Failed to create admission");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6 max-w-5xl mx-auto">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">New Admission</h2>
+          <p className="text-muted-foreground">Create a new pet admission record</p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Header Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Admission Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="admissionDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Admission *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cageId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cage No.</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select cage (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {cages?.map((cage) => (
+                              <SelectItem key={cage.id} value={cage.id}>
+                                {cage.cage_number} - {cage.name} ({cage.rooms?.name})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Owner Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Owner Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="ownerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Admitted By *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Owner name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ownerAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="ownerPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mobile *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ownerEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="Email (optional)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="broughtBy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brought to the Shelter By</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Person who brought the animal" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Pet Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Details of Animals</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="petName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pet Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Pet name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="species"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Species *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Dog, Cat" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sex *</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex gap-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="male" id="male" />
+                            <Label htmlFor="male">Male</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="female" id="female" />
+                            <Label htmlFor="female">Female</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Age (years)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Age"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="weight"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Weight (kg)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Weight"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Colour</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Black / Brown / Fawn / White / Ash" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="breed"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Breed / Others</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Breed or other details" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Medical Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Medical Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reason of Admission *</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Describe the reason for admission" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="xrayDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of X-Ray</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="operationDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Operation</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Antibiotic Given</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="antibioticDay1"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Day 1</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Medicine" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="antibioticDay2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Day 2</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Medicine" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="antibioticDay3"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Day 3</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Medicine" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="antibioticDay5"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Day 5</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Medicine" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="bloodTestReport"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Blood Test Report</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter blood test report details" rows={4} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="paymentReceived"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Received</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-4 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/pets")}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Admission"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default Admissions;

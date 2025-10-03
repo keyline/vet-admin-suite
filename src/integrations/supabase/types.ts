@@ -19,49 +19,67 @@ export type Database = {
           admission_date: string
           admission_number: string
           admitted_by: string | null
+          antibiotics_schedule: Json | null
+          blood_test_report: string | null
+          brought_by: string | null
           cage_id: string | null
           created_at: string
           diagnosis: string | null
           discharge_date: string | null
           id: string
           notes: string | null
+          operation_date: string | null
+          payment_received: number | null
           pet_id: string
           reason: string
           status: Database["public"]["Enums"]["admission_status"]
           symptoms: string | null
           updated_at: string
+          xray_date: string | null
         }
         Insert: {
           admission_date?: string
           admission_number: string
           admitted_by?: string | null
+          antibiotics_schedule?: Json | null
+          blood_test_report?: string | null
+          brought_by?: string | null
           cage_id?: string | null
           created_at?: string
           diagnosis?: string | null
           discharge_date?: string | null
           id?: string
           notes?: string | null
+          operation_date?: string | null
+          payment_received?: number | null
           pet_id: string
           reason: string
           status?: Database["public"]["Enums"]["admission_status"]
           symptoms?: string | null
           updated_at?: string
+          xray_date?: string | null
         }
         Update: {
           admission_date?: string
           admission_number?: string
           admitted_by?: string | null
+          antibiotics_schedule?: Json | null
+          blood_test_report?: string | null
+          brought_by?: string | null
           cage_id?: string | null
           created_at?: string
           diagnosis?: string | null
           discharge_date?: string | null
           id?: string
           notes?: string | null
+          operation_date?: string | null
+          payment_received?: number | null
           pet_id?: string
           reason?: string
           status?: Database["public"]["Enums"]["admission_status"]
           symptoms?: string | null
           updated_at?: string
+          xray_date?: string | null
         }
         Relationships: [
           {
