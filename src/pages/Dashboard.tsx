@@ -34,7 +34,7 @@ const Dashboard = () => {
     },
   });
 
-  // Fetch cage statistics
+  // Fetch cage statistics and admitted pets
   const { data: cageStats, isLoading: isCagesLoading } = useQuery({
     queryKey: ["dashboard-cages"],
     queryFn: async () => {
@@ -47,6 +47,12 @@ const Dashboard = () => {
 
       const totalCapacity = cages?.reduce((sum, cage) => sum + cage.max_pet_count, 0) || 0;
       
+      // Get count of currently admitted pets
+      const { count: admittedCount } = await supabase
+        .from("admissions")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["admitted", "pending"]);
+      
       // Get count of occupied cages
       const { count: occupiedCount } = await supabase
         .from("admissions")
@@ -55,6 +61,8 @@ const Dashboard = () => {
         .in("status", ["admitted", "pending"]);
       
       return {
+        admittedPets: admittedCount || 0,
+        totalCapacity: totalCapacity,
         occupied: occupiedCount || 0,
         total: cages?.length || 0,
       };
@@ -63,9 +71,9 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: "Total Pets",
-      value: isPetsLoading ? <Skeleton className="h-8 w-16" /> : totalPets?.toString() || "0",
-      description: "Currently in shelter",
+      title: "Admitted Pets",
+      value: isCagesLoading ? <Skeleton className="h-8 w-24" /> : `${cageStats?.admittedPets || 0}/${cageStats?.totalCapacity || 0}`,
+      description: "Admitted / Available spaces",
       icon: PawPrint,
       color: "text-primary",
     },
