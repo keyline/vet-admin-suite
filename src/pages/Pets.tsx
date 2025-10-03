@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, DoorOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -154,7 +154,7 @@ const Pets = () => {
                                 size="sm"
                                 onClick={() => handleRemovePet(pet.id, pet.name)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <DoorOpen className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
