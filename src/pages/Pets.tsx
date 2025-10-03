@@ -12,13 +12,34 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 
 const Pets = () => {
   const navigate = useNavigate();
+
+  // Check if current user is super admin
+  const { data: userRole } = useQuery({
+    queryKey: ["userRole"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "superadmin")
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isSuperAdmin = !!userRole;
 
   const { data: pets, isLoading } = useQuery({
     queryKey: ["pets"],
@@ -93,6 +114,7 @@ const Pets = () => {
                     <TableHead>Cage Number</TableHead>
                     <TableHead>Admission Date</TableHead>
                     <TableHead>Status</TableHead>
+                    {isSuperAdmin && <TableHead>Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -122,6 +144,20 @@ const Pets = () => {
                             {pet.active ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
+                        {isSuperAdmin && (
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // TODO: Navigate to edit page or open edit dialog
+                                console.log("Edit pet:", pet.id);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
