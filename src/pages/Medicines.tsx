@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ const Medicines = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [medicineToDelete, setMedicineToDelete] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { canAdd, canEdit, canDelete } = usePermissions();
 
   const { data: medicines, isLoading } = useQuery({
     queryKey: ["medicines"],
@@ -148,16 +150,18 @@ const Medicines = () => {
             <h2 className="text-3xl font-bold tracking-tight">Medicines</h2>
             <p className="text-muted-foreground">Manage medicine inventory</p>
           </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              setSelectedMedicine(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Medicine
-          </Button>
+          {canAdd('medicines') && (
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setSelectedMedicine(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Medicine
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -217,20 +221,24 @@ const Medicines = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(medicine)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(medicine)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit('medicines') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(medicine)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete('medicines') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(medicine)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Card,
   CardContent,
@@ -37,6 +38,7 @@ export default function Rooms() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const { canAdd, canEdit, canDelete } = usePermissions();
 
   const { data: rooms, refetch } = useQuery({
     queryKey: ["rooms"],
@@ -98,15 +100,17 @@ export default function Rooms() {
               Manage rooms across all buildings
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setSelectedRoom(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Room
-          </Button>
+          {canAdd('rooms') && (
+            <Button
+              onClick={() => {
+                setSelectedRoom(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Room
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -146,20 +150,24 @@ export default function Rooms() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(room)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDeleteDialog(room)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit('rooms') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(room)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete('rooms') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openDeleteDialog(room)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

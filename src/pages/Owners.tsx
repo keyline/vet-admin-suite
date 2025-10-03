@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ const Owners = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ownerToDelete, setOwnerToDelete] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { canAdd, canEdit, canDelete } = usePermissions();
 
   const { data: owners, isLoading } = useQuery({
     queryKey: ["pet_owners"],
@@ -144,16 +146,18 @@ const Owners = () => {
             <h2 className="text-3xl font-bold tracking-tight">Pet Owners</h2>
             <p className="text-muted-foreground">Manage your client database</p>
           </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              setSelectedOwner(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Owner
-          </Button>
+          {canAdd('pet_owners') && (
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setSelectedOwner(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Owner
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -197,20 +201,24 @@ const Owners = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(owner)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(owner)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit('pet_owners') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(owner)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete('pet_owners') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(owner)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

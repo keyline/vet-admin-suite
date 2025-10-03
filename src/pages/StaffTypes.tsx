@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Card,
   CardContent,
@@ -36,6 +37,7 @@ export default function StaffTypes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedStaffType, setSelectedStaffType] = useState<any>(null);
+  const { canAdd, canEdit, canDelete } = usePermissions();
 
   const { data: staffTypes, refetch } = useQuery({
     queryKey: ["staff-types"],
@@ -90,15 +92,17 @@ export default function StaffTypes() {
             Manage staff type classifications
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setSelectedStaffType(null);
-            setDialogOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Staff Type
-        </Button>
+        {canAdd('staff_types') && (
+          <Button
+            onClick={() => {
+              setSelectedStaffType(null);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Staff Type
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -130,20 +134,24 @@ export default function StaffTypes() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(staffType)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openDeleteDialog(staffType)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canEdit('staff_types') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(staffType)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete('staff_types') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openDeleteDialog(staffType)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

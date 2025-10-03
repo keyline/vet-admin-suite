@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
   TableBody,
@@ -19,27 +20,7 @@ import { format } from "date-fns";
 
 const Pets = () => {
   const navigate = useNavigate();
-
-  // Check if current user is super admin
-  const { data: userRole } = useQuery({
-    queryKey: ["userRole"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "superadmin")
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const isSuperAdmin = !!userRole;
+  const { canAdd, canEdit } = usePermissions();
 
   const { data: pets, isLoading } = useQuery({
     queryKey: ["pets"],
@@ -77,10 +58,12 @@ const Pets = () => {
             <h2 className="text-3xl font-bold tracking-tight">Pets</h2>
             <p className="text-muted-foreground">Manage pet records</p>
           </div>
-          <Button className="gap-2" onClick={() => navigate("/admissions")}>
-            <Plus className="h-4 w-4" />
-            Add Pet
-          </Button>
+          {canAdd('pets') && (
+            <Button className="gap-2" onClick={() => navigate("/admissions")}>
+              <Plus className="h-4 w-4" />
+              Add Pet
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -114,7 +97,7 @@ const Pets = () => {
                     <TableHead>Cage Number</TableHead>
                     <TableHead>Admission Date</TableHead>
                     <TableHead>Status</TableHead>
-                    {isSuperAdmin && <TableHead>Actions</TableHead>}
+                    {canEdit('pets') && <TableHead>Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -144,7 +127,7 @@ const Pets = () => {
                             {pet.active ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
-                        {isSuperAdmin && (
+                        {canEdit('pets') && (
                           <TableCell>
                             <Button
                               variant="ghost"

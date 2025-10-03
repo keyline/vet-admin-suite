@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Key } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ const Staff = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { canAdd, canEdit, canDelete, isAdmin } = usePermissions();
 
   const { data: staff, isLoading } = useQuery({
     queryKey: ["staff"],
@@ -249,16 +251,18 @@ const Staff = () => {
             <h2 className="text-3xl font-bold tracking-tight">Staff</h2>
             <p className="text-muted-foreground">Manage hospital staff members</p>
           </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              setSelectedStaff(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Staff
-          </Button>
+          {canAdd('staff') && (
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setSelectedStaff(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Staff
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -308,7 +312,7 @@ const Staff = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        {!member.user_id && (
+                        {isAdmin && !member.user_id && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -322,20 +326,24 @@ const Staff = () => {
                             <Key className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(member)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(member)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit('staff') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(member)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete('staff') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(member)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

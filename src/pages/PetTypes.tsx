@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ const PetTypes = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [petTypeToDelete, setPetTypeToDelete] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { canAdd, canEdit, canDelete } = usePermissions();
 
   const { data: petTypes, isLoading } = useQuery({
     queryKey: ["pet_types"],
@@ -144,16 +146,18 @@ const PetTypes = () => {
             <h2 className="text-3xl font-bold tracking-tight">Pet Types</h2>
             <p className="text-muted-foreground">Manage pet species catalog</p>
           </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              setSelectedPetType(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Pet Type
-          </Button>
+          {canAdd('pet_types') && (
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setSelectedPetType(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Pet Type
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -193,20 +197,24 @@ const PetTypes = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(petType)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(petType)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit('pet_types') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(petType)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete('pet_types') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(petType)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
