@@ -76,6 +76,7 @@ export function AppSidebar() {
   const [adminMenuOpen, setAdminMenuOpen] = useState(true);
   const [userPermissions, setUserPermissions] = useState<Set<string>>(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDoctor, setIsDoctor] = useState(false);
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -101,6 +102,11 @@ export function AppSidebar() {
       const adminRole = roles.some(r => r.role === 'admin' || r.role === 'superadmin');
       setIsAdmin(adminRole);
       console.log('[AppSidebar] Is admin?', adminRole);
+
+      // Check if user is a doctor
+      const doctorRole = roles.some(r => r.role === 'doctor');
+      setIsDoctor(doctorRole);
+      console.log('[AppSidebar] Is doctor?', doctorRole);
 
       if (adminRole) {
         // Admins see everything, no need to fetch permissions
@@ -149,6 +155,23 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {isDoctor && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/doctor-dashboard" end className={getNavCls}>
+                      <Stethoscope className="h-4 w-4" />
+                      {!collapsed && <span>My Patients</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <Collapsible open={mainMenuOpen} onOpenChange={setMainMenuOpen}>
           <SidebarGroup>
             <CollapsibleTrigger asChild>

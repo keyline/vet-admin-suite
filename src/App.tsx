@@ -21,6 +21,7 @@ import Treatments from "./pages/Treatments";
 import Medicines from "./pages/Medicines";
 import PetTypes from "./pages/PetTypes";
 import RoleManagement from "./pages/RoleManagement";
+import DoctorDashboard from "./pages/DoctorDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -145,6 +146,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <RoleManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor-dashboard"
+              element={
+                <ProtectedRoute>
+                  <DoctorDashboard />
                 </ProtectedRoute>
               }
             />
