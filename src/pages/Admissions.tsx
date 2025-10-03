@@ -536,44 +536,6 @@ const Admissions = () => {
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="doctorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign to Doctor</FormLabel>
-                      <div className="relative">
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a doctor (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-popover z-50">
-                            {doctors?.map((doctor) => (
-                              <SelectItem key={doctor.id} value={doctor.id}>
-                                {doctor.name} ({doctor.pet_count} pets)
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {field.value && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-8 top-0 h-full px-2 hover:bg-transparent"
-                            onClick={() => field.onChange("")}
-                          >
-                            ✕
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </CardContent>
             </Card>
 
@@ -858,6 +820,44 @@ const Admissions = () => {
                       <FormControl>
                         <Textarea placeholder="Describe the reason for admission" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="doctorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign to Doctor</FormLabel>
+                      <div className="relative">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a doctor (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover z-50">
+                            {doctors?.map((doctor) => (
+                              <SelectItem key={doctor.id} value={doctor.id}>
+                                {doctor.name} ({doctor.pet_count} pets)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {field.value && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-8 top-0 h-full px-2 hover:bg-transparent"
+                            onClick={() => field.onChange("")}
+                          >
+                            ✕
+                          </Button>
+                        )}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
