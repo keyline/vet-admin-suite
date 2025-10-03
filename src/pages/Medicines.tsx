@@ -210,7 +210,7 @@ const Medicines = () => {
                           {medicine.stock_quantity} {medicine.unit}
                         </span>
                       </TableCell>
-                      <TableCell>${Number(medicine.unit_price).toFixed(2)}</TableCell>
+                      <TableCell>₹{Number(medicine.unit_price).toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge variant={medicine.active ? "default" : "secondary"}>
                           {medicine.active ? "Active" : "Inactive"}

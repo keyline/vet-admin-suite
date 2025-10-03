@@ -188,7 +188,7 @@ const Treatments = () => {
                     <TableRow key={treatment.id}>
                       <TableCell className="font-medium">{treatment.name}</TableCell>
                       <TableCell>{treatment.description || "-"}</TableCell>
-                      <TableCell>${Number(treatment.base_cost).toFixed(2)}</TableCell>
+                      <TableCell>₹{Number(treatment.base_cost).toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge variant={treatment.active ? "default" : "secondary"}>
                           {treatment.active ? "Active" : "Inactive"}

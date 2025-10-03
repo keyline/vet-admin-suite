@@ -332,7 +332,7 @@ export function MedicineDialog({
                 name="unit_price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Price</FormLabel>
+                    <FormLabel>Unit Price (₹)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="0.00" {...field} />
                     </FormControl>

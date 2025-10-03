@@ -103,7 +103,7 @@ export function TreatmentDialog({
               name="base_cost"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Base Cost</FormLabel>
+                  <FormLabel>Base Cost (₹)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
