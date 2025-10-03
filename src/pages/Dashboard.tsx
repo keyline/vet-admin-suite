@@ -110,7 +110,7 @@ const Dashboard = () => {
                 <button className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted transition-colors">
                   <PawPrint className="h-5 w-5 text-accent" />
                   <div>
-                    <p className="text-sm font-medium">Register Pet</p>
+                    <p className="text-sm font-medium">Admission a new Pet</p>
                     <p className="text-xs text-muted-foreground">Add a new pet to the system</p>
                   </div>
                 </button>
