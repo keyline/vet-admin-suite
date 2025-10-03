@@ -37,6 +37,7 @@ const formSchema = z.object({
   name: z.string().optional(),
   cage_number: z.string().min(1, "Cage number is required"),
   size: z.string().optional(),
+  max_pet_count: z.number().min(1, "Maximum pet count must be at least 1"),
   status: z.enum(["available", "occupied", "maintenance"]).default("available"),
   notes: z.string().optional(),
   active: z.boolean().default(true),
@@ -84,6 +85,7 @@ export function CageDialog({
       name: "",
       cage_number: "",
       size: "",
+      max_pet_count: 1,
       status: "available",
       notes: "",
       active: true,
@@ -97,6 +99,7 @@ export function CageDialog({
         name: cage.name || "",
         cage_number: cage.cage_number,
         size: cage.size || "",
+        max_pet_count: cage.max_pet_count || 1,
         status: cage.status,
         notes: cage.notes || "",
         active: cage.active,
@@ -107,6 +110,7 @@ export function CageDialog({
         name: "",
         cage_number: "",
         size: "",
+        max_pet_count: 1,
         status: "available",
         notes: "",
         active: true,
@@ -121,6 +125,7 @@ export function CageDialog({
         name: data.name || null,
         cage_number: data.cage_number,
         size: data.size || null,
+        max_pet_count: data.max_pet_count,
         status: data.status,
         notes: data.notes || null,
         active: data.active,
@@ -224,6 +229,26 @@ export function CageDialog({
                     <Input
                       placeholder="e.g., Small, Medium, Large"
                       {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="max_pet_count"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximum Pet Count</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="e.g., 1"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 1)}
                     />
                   </FormControl>
                   <FormMessage />

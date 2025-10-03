@@ -271,6 +271,7 @@ export type Database = {
           cage_number: string
           created_at: string
           id: string
+          max_pet_count: number
           name: string | null
           notes: string | null
           room_id: string
@@ -283,6 +284,7 @@ export type Database = {
           cage_number: string
           created_at?: string
           id?: string
+          max_pet_count?: number
           name?: string | null
           notes?: string | null
           room_id: string
@@ -295,6 +297,7 @@ export type Database = {
           cage_number?: string
           created_at?: string
           id?: string
+          max_pet_count?: number
           name?: string | null
           notes?: string | null
           room_id?: string
@@ -1054,6 +1057,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_cage_current_pet_count: {
+        Args: { cage_uuid: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1063,6 +1070,10 @@ export type Database = {
       }
       is_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_cage_available: {
+        Args: { cage_uuid: string }
         Returns: boolean
       }
     }

@@ -58,7 +58,22 @@ export default function Cages() {
         .order("cage_number");
 
       if (error) throw error;
-      return data;
+      
+      // Get current pet count for each cage
+      const cagesWithCount = await Promise.all(
+        (data || []).map(async (cage) => {
+          const { data: countData } = await supabase.rpc(
+            'get_cage_current_pet_count',
+            { cage_uuid: cage.id }
+          );
+          return {
+            ...cage,
+            current_pet_count: countData || 0,
+          };
+        })
+      );
+      
+      return cagesWithCount;
     },
   });
 
@@ -141,6 +156,7 @@ export default function Cages() {
                   <TableHead>Cage Number</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Size</TableHead>
+                  <TableHead>Occupancy</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Active</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -160,6 +176,11 @@ export default function Cages() {
                     <TableCell>{cage.cage_number}</TableCell>
                     <TableCell>{cage.name || "-"}</TableCell>
                     <TableCell>{cage.size || "-"}</TableCell>
+                    <TableCell>
+                      <span className={cage.current_pet_count >= cage.max_pet_count ? "text-destructive font-medium" : ""}>
+                        {cage.current_pet_count || 0} / {cage.max_pet_count}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(cage.status)}>
                         {cage.status}
@@ -193,7 +214,7 @@ export default function Cages() {
                 {!cages?.length && (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center text-muted-foreground"
                     >
                       No cages found
