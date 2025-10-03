@@ -63,25 +63,35 @@ const Owners = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("admissions")
-        .select("brought_by, payment_received, admission_date, admission_number")
+        .select(`
+          payment_received, 
+          admission_date, 
+          admission_number,
+          pets!inner (
+            owner_id,
+            pet_owners!inner (
+              id,
+              name
+            )
+          )
+        `)
         .gt("payment_received", 0)
-        .not("brought_by", "is", null)
         .order("admission_date", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const getDonationTotal = (ownerName: string) => {
+  const getDonationTotal = (ownerId: string) => {
     if (!donations) return 0;
     return donations
-      .filter(d => d.brought_by?.toLowerCase() === ownerName.toLowerCase())
+      .filter(d => d.pets?.pet_owners?.id === ownerId)
       .reduce((sum, d) => sum + (Number(d.payment_received) || 0), 0);
   };
 
-  const getOwnerDonations = (ownerName: string) => {
+  const getOwnerDonations = (ownerId: string) => {
     if (!donations) return [];
-    return donations.filter(d => d.brought_by?.toLowerCase() === ownerName.toLowerCase());
+    return donations.filter(d => d.pets?.pet_owners?.id === ownerId);
   };
 
   const handleDonationClick = (owner: any) => {
@@ -231,7 +241,7 @@ const Owners = () => {
                 </TableHeader>
                 <TableBody>
                   {owners.map((owner) => {
-                    const totalDonations = getDonationTotal(owner.name);
+                    const totalDonations = getDonationTotal(owner.id);
                     return (
                       <TableRow key={owner.id}>
                         <TableCell className="font-medium">{owner.name}</TableCell>
@@ -322,7 +332,7 @@ const Owners = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedOwnerForDonations && getOwnerDonations(selectedOwnerForDonations.name).length > 0 ? (
+            {selectedOwnerForDonations && getOwnerDonations(selectedOwnerForDonations.id).length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -333,7 +343,7 @@ const Owners = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {getOwnerDonations(selectedOwnerForDonations.name).map((donation, index) => (
+                  {getOwnerDonations(selectedOwnerForDonations.id).map((donation, index) => (
                     <TableRow key={index}>
                       <TableCell>
                         {new Date(donation.admission_date).toLocaleDateString('en-IN')}
