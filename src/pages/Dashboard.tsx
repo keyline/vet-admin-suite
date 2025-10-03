@@ -84,7 +84,7 @@ const Dashboard = () => {
       color: "text-warning",
     },
     {
-      title: "Revenue (MTD)",
+      title: "Donation",
       value: "₹0",
       description: "This month",
       icon: DollarSign,
