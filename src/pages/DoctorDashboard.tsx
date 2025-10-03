@@ -170,10 +170,7 @@ const DoctorDashboard = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Admission No.</TableHead>
-                    <TableHead>Pet Name</TableHead>
                     <TableHead>Species/Breed</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Contact</TableHead>
                     <TableHead>Cage Location</TableHead>
                     <TableHead>Admission Date</TableHead>
                     <TableHead>Status</TableHead>
@@ -186,13 +183,10 @@ const DoctorDashboard = () => {
                       <TableCell className="font-medium">
                         {admission.admission_number}
                       </TableCell>
-                      <TableCell>{admission.pets?.name}</TableCell>
                       <TableCell>
                         {admission.pets?.species}
                         {admission.pets?.breed && ` / ${admission.pets.breed}`}
                       </TableCell>
-                      <TableCell>{admission.pets?.pet_owners?.name}</TableCell>
-                      <TableCell>{admission.pets?.pet_owners?.phone}</TableCell>
                       <TableCell>{getCageLocation(admission.cages)}</TableCell>
                       <TableCell>
                         {format(new Date(admission.admission_date), "MMM dd, yyyy")}
