@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -13,14 +14,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { RemovePetDialog } from "@/components/pets/RemovePetDialog";
 
 const Pets = () => {
   const navigate = useNavigate();
   const { canAdd, canEdit } = usePermissions();
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [selectedPet, setSelectedPet] = useState<{ id: string; name: string } | null>(null);
 
   const { data: pets, isLoading } = useQuery({
     queryKey: ["pets"],
@@ -43,12 +47,18 @@ const Pets = () => {
             )
           )
         `)
+        .eq("removed", false)
         .order("name");
 
       if (error) throw error;
       return data;
     },
   });
+
+  const handleRemovePet = (petId: string, petName: string) => {
+    setSelectedPet({ id: petId, name: petName });
+    setRemoveDialogOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -129,15 +139,24 @@ const Pets = () => {
                         </TableCell>
                         {canEdit('pets') && (
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                navigate(`/admissions?petId=${pet.id}`);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  navigate(`/admissions?petId=${pet.id}`);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemovePet(pet.id, pet.name)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         )}
                       </TableRow>
@@ -149,6 +168,14 @@ const Pets = () => {
           </CardContent>
         </Card>
       </div>
+      {selectedPet && (
+        <RemovePetDialog
+          petId={selectedPet.id}
+          petName={selectedPet.name}
+          open={removeDialogOpen}
+          onOpenChange={setRemoveDialogOpen}
+        />
+      )}
     </DashboardLayout>
   );
 };

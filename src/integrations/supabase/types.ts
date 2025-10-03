@@ -652,6 +652,9 @@ export type Database = {
           name: string
           owner_id: string
           photo_url: string | null
+          removal_date: string | null
+          removal_reason: string | null
+          removed: boolean
           species: string
           updated_at: string
           weight: number | null
@@ -669,6 +672,9 @@ export type Database = {
           name: string
           owner_id: string
           photo_url?: string | null
+          removal_date?: string | null
+          removal_reason?: string | null
+          removed?: boolean
           species: string
           updated_at?: string
           weight?: number | null
@@ -686,6 +692,9 @@ export type Database = {
           name?: string
           owner_id?: string
           photo_url?: string | null
+          removal_date?: string | null
+          removal_reason?: string | null
+          removed?: boolean
           species?: string
           updated_at?: string
           weight?: number | null
