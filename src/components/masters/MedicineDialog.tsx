@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +23,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const medicineSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -53,6 +70,26 @@ export function MedicineDialog({
   onSubmit,
   isLoading,
 }: MedicineDialogProps) {
+  const { data: categories = [] } = useQuery({
+    queryKey: ["medicine-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("medicines")
+        .select("category")
+        .not("category", "is", null)
+        .order("category");
+      
+      if (error) throw error;
+      
+      // Get unique categories
+      const uniqueCategories = Array.from(
+        new Set(data.map((item) => item.category).filter(Boolean))
+      ) as string[];
+      
+      return uniqueCategories;
+    },
+  });
+
   const form = useForm<MedicineFormValues>({
     resolver: zodResolver(medicineSchema),
     defaultValues: {
@@ -132,11 +169,60 @@ export function MedicineDialog({
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Antibiotic" {...field} />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value || "Select or type category"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Search or type new category..."
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              Press Enter to add "{field.value}"
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {categories.map((category) => (
+                                <CommandItem
+                                  key={category}
+                                  value={category}
+                                  onSelect={() => {
+                                    field.onChange(category);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      category === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {category}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
