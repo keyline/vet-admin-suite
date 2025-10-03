@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -83,6 +83,58 @@ export function TreatmentRecordDialog({
     observations: "",
   });
 
+  const [existingVisitId, setExistingVisitId] = useState<string | null>(null);
+
+  // Fetch existing treatment record for today
+  const { data: existingVisit } = useQuery({
+    queryKey: ["treatment-record", admissionId, format(treatmentData.date, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const dateStr = format(treatmentData.date, "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("doctor_visits")
+        .select("*")
+        .eq("admission_id", admissionId)
+        .gte("visit_date", `${dateStr}T00:00:00`)
+        .lte("visit_date", `${dateStr}T23:59:59`)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!admissionId,
+  });
+
+  // Load existing data into form when found
+  useEffect(() => {
+    if (existingVisit) {
+      setExistingVisitId(existingVisit.id);
+      const vitals = existingVisit.vitals as any;
+      
+      setTreatmentData({
+        date: new Date(existingVisit.visit_date),
+        morning: {
+          temperature: vitals?.morning?.temperature?.toString() || "",
+          urine: vitals?.morning?.urine || "",
+          urineAmount: vitals?.morning?.urineAmount || "",
+          stool: vitals?.morning?.stool || "",
+          stoolAmount: vitals?.morning?.stoolAmount || "",
+          medication: vitals?.morning?.medication || "",
+        },
+        evening: {
+          temperature: vitals?.evening?.temperature?.toString() || "",
+          urine: vitals?.evening?.urine || "",
+          urineAmount: vitals?.evening?.urineAmount || "",
+          stool: vitals?.evening?.stool || "",
+          stoolAmount: vitals?.evening?.stoolAmount || "",
+          medication: vitals?.evening?.medication || "",
+        },
+        observations: existingVisit.observations || "",
+      });
+    } else {
+      setExistingVisitId(null);
+    }
+  }, [existingVisit]);
+
   const saveTreatmentMutation = useMutation({
     mutationFn: async (data: TreatmentData) => {
       const vitals = {
@@ -105,23 +157,39 @@ export function TreatmentRecordDialog({
         },
       };
 
-      const { error } = await supabase.from("doctor_visits").insert({
-        admission_id: admissionId,
-        doctor_id: doctorId,
-        visit_date: data.date.toISOString(),
-        vitals,
-        observations: data.observations || null,
-      });
+      // Update if record exists, otherwise insert
+      if (existingVisitId) {
+        const { error } = await supabase
+          .from("doctor_visits")
+          .update({
+            vitals,
+            observations: data.observations || null,
+          })
+          .eq("id", existingVisitId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("doctor_visits").insert({
+          admission_id: admissionId,
+          doctor_id: doctorId,
+          visit_date: data.date.toISOString(),
+          vitals,
+          observations: data.observations || null,
+        });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast({
-        title: "Treatment Recorded",
-        description: "Treatment record has been saved successfully.",
+        title: existingVisitId ? "Treatment Updated" : "Treatment Recorded",
+        description: existingVisitId 
+          ? "Treatment record has been updated successfully." 
+          : "Treatment record has been saved successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
       queryClient.invalidateQueries({ queryKey: ["today-treatments"] });
+      queryClient.invalidateQueries({ queryKey: ["treatment-record"] });
       onOpenChange(false);
       // Reset form
       setTreatmentData({
@@ -144,6 +212,7 @@ export function TreatmentRecordDialog({
         },
         observations: "",
       });
+      setExistingVisitId(null);
     },
     onError: (error: Error) => {
       toast({
@@ -438,7 +507,11 @@ export function TreatmentRecordDialog({
             onClick={handleSave}
             disabled={saveTreatmentMutation.isPending}
           >
-            {saveTreatmentMutation.isPending ? "Saving..." : "Save Treatment"}
+            {saveTreatmentMutation.isPending 
+              ? "Saving..." 
+              : existingVisitId 
+              ? "Update Treatment" 
+              : "Save Treatment"}
           </Button>
         </DialogFooter>
       </DialogContent>
