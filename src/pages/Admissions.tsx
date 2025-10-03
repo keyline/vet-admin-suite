@@ -167,13 +167,12 @@ const Admissions = () => {
       const { data, error } = await supabase
         .from("cages")
         .select("id, cage_number, name, max_pet_count, rooms(name)")
-        .eq("status", "available")
         .eq("active", true)
         .order("cage_number");
       
       if (error) throw error;
       
-      // Get current count for each cage and filter by availability
+      // Get current count for each cage to display occupancy
       const cagesWithCount = await Promise.all(
         (data || []).map(async (cage) => {
           const { data: currentCount } = await supabase.rpc(
@@ -184,12 +183,13 @@ const Admissions = () => {
           return {
             ...cage,
             current_count: currentCount || 0,
+            is_available: (currentCount || 0) < cage.max_pet_count,
           };
         })
       );
       
-      // Only return cages that are not fully occupied
-      return cagesWithCount.filter(cage => cage.current_count < cage.max_pet_count);
+      // Show all cages that have space available
+      return cagesWithCount.filter(cage => cage.is_available);
     },
   });
 
