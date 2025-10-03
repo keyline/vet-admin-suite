@@ -13,6 +13,7 @@ import {
   Heart,
   LogOut,
   ChevronDown,
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -56,6 +57,10 @@ const masterItems = [
   { title: "Pet Types", url: "/masters/pet-types", icon: PawPrint },
 ];
 
+const adminItems = [
+  { title: "Role Management", url: "/role-management", icon: Shield },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
@@ -65,6 +70,7 @@ export function AppSidebar() {
   
   const [mainMenuOpen, setMainMenuOpen] = useState(true);
   const [masterDataOpen, setMasterDataOpen] = useState(true);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(true);
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -121,6 +127,33 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {masterItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={item.url} end className={getNavCls}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+
+        <Collapsible open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className={`cursor-pointer ${collapsed ? "sr-only" : "flex items-center justify-between"}`}>
+                <span>Administration</span>
+                {!collapsed && <ChevronDown className={`h-4 w-4 transition-transform ${adminMenuOpen ? "" : "-rotate-90"}`} />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {adminItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} end className={getNavCls}>

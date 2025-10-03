@@ -864,6 +864,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          module: Database["public"]["Enums"]["app_module"]
+          permission: Database["public"]["Enums"]["permission_type"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          module: Database["public"]["Enums"]["app_module"]
+          permission: Database["public"]["Enums"]["permission_type"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          module?: Database["public"]["Enums"]["app_module"]
+          permission?: Database["public"]["Enums"]["permission_type"]
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           active: boolean
@@ -1061,6 +1088,14 @@ export type Database = {
         Args: { cage_uuid: string }
         Returns: number
       }
+      has_permission: {
+        Args: {
+          _module: Database["public"]["Enums"]["app_module"]
+          _permission: Database["public"]["Enums"]["permission_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1080,6 +1115,22 @@ export type Database = {
     Enums: {
       admission_status: "pending" | "admitted" | "discharged" | "deceased"
       allotment_status: "pending" | "issued" | "returned" | "consumed"
+      app_module:
+        | "pets"
+        | "owners"
+        | "admissions"
+        | "medicines"
+        | "treatments"
+        | "staff"
+        | "buildings"
+        | "rooms"
+        | "cages"
+        | "pet_types"
+        | "staff_types"
+        | "billing"
+        | "donations"
+        | "purchase_orders"
+        | "doctor_visits"
       app_role:
         | "superadmin"
         | "admin"
@@ -1089,6 +1140,7 @@ export type Database = {
         | "accountant"
       bill_status: "draft" | "pending" | "paid" | "cancelled"
       cage_status: "available" | "occupied" | "maintenance" | "reserved"
+      permission_type: "view" | "add" | "edit" | "delete"
       po_status: "draft" | "submitted" | "approved" | "received" | "cancelled"
     }
     CompositeTypes: {
@@ -1219,6 +1271,23 @@ export const Constants = {
     Enums: {
       admission_status: ["pending", "admitted", "discharged", "deceased"],
       allotment_status: ["pending", "issued", "returned", "consumed"],
+      app_module: [
+        "pets",
+        "owners",
+        "admissions",
+        "medicines",
+        "treatments",
+        "staff",
+        "buildings",
+        "rooms",
+        "cages",
+        "pet_types",
+        "staff_types",
+        "billing",
+        "donations",
+        "purchase_orders",
+        "doctor_visits",
+      ],
       app_role: [
         "superadmin",
         "admin",
@@ -1229,6 +1298,7 @@ export const Constants = {
       ],
       bill_status: ["draft", "pending", "paid", "cancelled"],
       cage_status: ["available", "occupied", "maintenance", "reserved"],
+      permission_type: ["view", "add", "edit", "delete"],
       po_status: ["draft", "submitted", "approved", "received", "cancelled"],
     },
   },

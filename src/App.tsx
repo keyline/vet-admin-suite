@@ -18,6 +18,7 @@ import StaffTypes from "./pages/StaffTypes";
 import Treatments from "./pages/Treatments";
 import Medicines from "./pages/Medicines";
 import PetTypes from "./pages/PetTypes";
+import RoleManagement from "./pages/RoleManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -125,6 +126,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PetTypes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/role-management"
+              element={
+                <ProtectedRoute>
+                  <RoleManagement />
                 </ProtectedRoute>
               }
             />
