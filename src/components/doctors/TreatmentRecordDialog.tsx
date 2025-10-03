@@ -297,7 +297,7 @@ export function TreatmentRecordDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle>Record Treatment</DialogTitle>
           <DialogDescription>
@@ -307,14 +307,14 @@ export function TreatmentRecordDialog({
 
         <div className="space-y-6">
           {/* Date Selector */}
-          <div className="flex items-center gap-4">
-            <Label>Treatment Date:</Label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <Label className="sm:min-w-fit">Treatment Date:</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[240px] justify-start text-left font-normal",
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
                     !treatmentData.date && "text-muted-foreground"
                   )}
                 >
@@ -337,10 +337,10 @@ export function TreatmentRecordDialog({
           </div>
 
           {/* Two Column Layout */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Morning Column */}
-            <div className="space-y-4 border-r pr-6">
-              <h3 className="text-lg font-semibold text-center">Morning</h3>
+            <div className="space-y-4 md:border-r md:pr-6">
+              <h3 className="text-lg font-semibold text-center bg-muted/50 py-2 rounded-md">Morning</h3>
 
               {/* Temperature */}
               <div className="space-y-2">
@@ -421,8 +421,8 @@ export function TreatmentRecordDialog({
             </div>
 
             {/* Evening Column */}
-            <div className="space-y-4 pl-6">
-              <h3 className="text-lg font-semibold text-center">Evening</h3>
+            <div className="space-y-4 md:pl-6">
+              <h3 className="text-lg font-semibold text-center bg-muted/50 py-2 rounded-md">Evening</h3>
 
               {/* Temperature */}
               <div className="space-y-2">
@@ -521,13 +521,18 @@ export function TreatmentRecordDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={saveTreatmentMutation.isPending}
+            className="w-full sm:w-auto"
           >
             {saveTreatmentMutation.isPending 
               ? "Saving..." 
