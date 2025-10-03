@@ -22,6 +22,7 @@ import Medicines from "./pages/Medicines";
 import PetTypes from "./pages/PetTypes";
 import RoleManagement from "./pages/RoleManagement";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import PurchaseOrders from "./pages/PurchaseOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -130,6 +131,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Medicines />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchase-orders"
+              element={
+                <ProtectedRoute>
+                  <PurchaseOrders />
                 </ProtectedRoute>
               }
             />

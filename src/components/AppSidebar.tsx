@@ -50,6 +50,7 @@ const navigationItems = [
 
 const masterItems = [
   { title: "Medicines", url: "/medicines", icon: Pill, module: "medicines" },
+  { title: "Purchase Orders", url: "/purchase-orders", icon: Package, module: "medicines" },
   { title: "Buildings", url: "/masters/buildings", icon: Building2, module: "buildings" },
   { title: "Rooms", url: "/masters/rooms", icon: Building2, module: "rooms" },
   { title: "Cages", url: "/masters/cages", icon: Building2, module: "cages" },
