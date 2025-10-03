@@ -1,9 +1,43 @@
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Pets = () => {
+  const navigate = useNavigate();
+
+  const { data: pets, isLoading } = useQuery({
+    queryKey: ["pets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pets")
+        .select(`
+          *,
+          pet_owners (
+            id,
+            name
+          )
+        `)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -12,7 +46,7 @@ const Pets = () => {
             <h2 className="text-3xl font-bold tracking-tight">Pets</h2>
             <p className="text-muted-foreground">Manage pet records</p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => navigate("/admissions")}>
             <Plus className="h-4 w-4" />
             Add Pet
           </Button>
@@ -24,9 +58,49 @@ const Pets = () => {
             <CardDescription>View and manage pet records</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
-              No pets found. Click "Add Pet" to get started.
-            </div>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : !pets || pets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <p>No pets found.</p>
+                <p className="text-sm">Pets are added through the admission process.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Species</TableHead>
+                    <TableHead>Breed</TableHead>
+                    <TableHead>Age</TableHead>
+                    <TableHead>Gender</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pets.map((pet) => (
+                    <TableRow key={pet.id}>
+                      <TableCell className="font-medium">{pet.name}</TableCell>
+                      <TableCell>{pet.pet_owners?.name || "-"}</TableCell>
+                      <TableCell>{pet.species}</TableCell>
+                      <TableCell>{pet.breed || "-"}</TableCell>
+                      <TableCell>{pet.age ? `${pet.age} years` : "-"}</TableCell>
+                      <TableCell className="capitalize">{pet.gender || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant={pet.active ? "default" : "secondary"}>
+                          {pet.active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
