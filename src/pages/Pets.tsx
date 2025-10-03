@@ -14,17 +14,24 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, DoorOpen } from "lucide-react";
+import { Plus, Edit, DoorOpen, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { RemovePetDialog } from "@/components/pets/RemovePetDialog";
+import { AssignCageDialog } from "@/components/pets/AssignCageDialog";
 
 const Pets = () => {
   const navigate = useNavigate();
   const { canAdd, canEdit } = usePermissions();
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState<{ id: string; name: string } | null>(null);
+  const [assignCageDialogOpen, setAssignCageDialogOpen] = useState(false);
+  const [selectedPetForCage, setSelectedPetForCage] = useState<{ 
+    id: string; 
+    name: string; 
+    admissionId: string;
+  } | null>(null);
 
   const { data: pets, isLoading } = useQuery({
     queryKey: ["pets"],
@@ -40,6 +47,7 @@ const Pets = () => {
           admissions!inner (
             id,
             admission_date,
+            status,
             cage_id,
             cages (
               cage_number,
@@ -49,7 +57,7 @@ const Pets = () => {
         `)
         .eq("removed", false)
         .neq("species", "donation")
-        .not("admissions.cage_id", "is", null)
+        .in("admissions.status", ["admitted", "pending"])
         .order("name");
 
       if (error) throw error;
@@ -60,6 +68,11 @@ const Pets = () => {
   const handleRemovePet = (petId: string, petName: string) => {
     setSelectedPet({ id: petId, name: petName });
     setRemoveDialogOpen(true);
+  };
+
+  const handleAssignCage = (petId: string, petName: string, admissionId: string) => {
+    setSelectedPetForCage({ id: petId, name: petName, admissionId });
+    setAssignCageDialogOpen(true);
   };
 
   return (
@@ -127,7 +140,11 @@ const Pets = () => {
                         <TableCell>{pet.age ? `${pet.age} years` : "-"}</TableCell>
                         <TableCell className="capitalize">{pet.gender || "-"}</TableCell>
                         <TableCell>
-                          {cage ? `${cage.cage_number} - ${cage.name}` : "-"}
+                          {cage ? (
+                            `${cage.cage_number} - ${cage.name}`
+                          ) : (
+                            <Badge variant="secondary">Pending Allocation</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           {latestAdmission?.admission_date 
@@ -142,22 +159,34 @@ const Pets = () => {
                         {canEdit('pets') && (
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  navigate(`/admissions?petId=${pet.id}`);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemovePet(pet.id, pet.name)}
-                              >
-                                <DoorOpen className="h-4 w-4" />
-                              </Button>
+                              {!cage ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAssignCage(pet.id, pet.name, latestAdmission.id)}
+                                >
+                                  <Home className="h-4 w-4" />
+                                </Button>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      navigate(`/admissions?petId=${pet.id}`);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemovePet(pet.id, pet.name)}
+                                  >
+                                    <DoorOpen className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </TableCell>
                         )}
@@ -176,6 +205,16 @@ const Pets = () => {
           petName={selectedPet.name}
           open={removeDialogOpen}
           onOpenChange={setRemoveDialogOpen}
+        />
+      )}
+      {selectedPetForCage && (
+        <AssignCageDialog
+          petId={selectedPetForCage.id}
+          petName={selectedPetForCage.name}
+          admissionId={selectedPetForCage.admissionId}
+          open={assignCageDialogOpen}
+          onOpenChange={setAssignCageDialogOpen}
+          onSuccess={() => {}}
         />
       )}
     </DashboardLayout>

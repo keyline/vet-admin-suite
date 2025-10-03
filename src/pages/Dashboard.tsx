@@ -47,11 +47,12 @@ const Dashboard = () => {
 
       const totalCapacity = cages?.reduce((sum, cage) => sum + cage.max_pet_count, 0) || 0;
       
-      // Get count of currently admitted pets
+      // Get count of currently admitted pets (excluding removed)
       const { count: admittedCount } = await supabase
         .from("admissions")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["admitted", "pending"]);
+        .select("pets!inner(*)", { count: "exact", head: true })
+        .in("status", ["admitted", "pending"])
+        .eq("pets.removed", false);
       
       // Get count of occupied cages
       const { count: occupiedCount } = await supabase
