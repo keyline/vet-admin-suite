@@ -44,6 +44,7 @@ const masterItems = [
   { title: "Buildings", url: "/masters/buildings", icon: Building2 },
   { title: "Staff", url: "/masters/staff", icon: Users },
   { title: "Treatments", url: "/masters/treatments", icon: Heart },
+  { title: "Pet Types", url: "/masters/pet-types", icon: PawPrint },
 ];
 
 export function AppSidebar() {

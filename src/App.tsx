@@ -13,6 +13,7 @@ import Buildings from "./pages/Buildings";
 import Staff from "./pages/Staff";
 import Treatments from "./pages/Treatments";
 import Medicines from "./pages/Medicines";
+import PetTypes from "./pages/PetTypes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Medicines />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/pet-types"
+              element={
+                <ProtectedRoute>
+                  <PetTypes />
                 </ProtectedRoute>
               }
             />
