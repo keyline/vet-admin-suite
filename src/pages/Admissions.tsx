@@ -284,10 +284,36 @@ const Admissions = () => {
       let ownerId: string;
       
       if (isEditMode) {
-        // Update existing owner
-        ownerId = petData.pet_owners?.id;
-        
-        if (!values.unknownOwner) {
+        if (values.unknownOwner) {
+          // Detach from current owner and assign to Unknown Owner
+          const { data: unknownOwnerData, error: unknownOwnerError } = await supabase
+            .from("pet_owners")
+            .select("id")
+            .eq("name", "Unknown Owner")
+            .eq("phone", "0000000000")
+            .maybeSingle();
+
+          if (unknownOwnerData) {
+            ownerId = unknownOwnerData.id;
+          } else {
+            // Create new Unknown Owner if doesn't exist
+            const { data: newUnknownOwner, error: createError } = await supabase
+              .from("pet_owners")
+              .insert({
+                name: "Unknown Owner",
+                phone: "0000000000",
+                address: "Unknown",
+              })
+              .select()
+              .single();
+
+            if (createError) throw createError;
+            ownerId = newUnknownOwner.id;
+          }
+        } else {
+          // Update existing owner
+          ownerId = petData.pet_owners?.id;
+          
           await supabase
             .from("pet_owners")
             .update({
@@ -352,10 +378,11 @@ const Admissions = () => {
       let petRecordId: string;
       
       if (isEditMode) {
-        // Update existing pet (don't update microchip_id)
+        // Update existing pet (including owner_id if changed)
         const { error: petError } = await supabase
           .from("pets")
           .update({
+            owner_id: ownerId,
             species: values.species,
             gender: values.gender,
             age: values.age,
