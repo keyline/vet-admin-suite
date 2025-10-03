@@ -58,14 +58,15 @@ const Staff = () => {
       let userId = null;
       
       // Create auth user if password is provided
-      if (values.password && values.phone) {
+      if (values.password && values.email) {
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          phone: values.phone,
+          email: values.email,
           password: values.password,
           options: {
             data: {
               full_name: values.name,
             },
+            emailRedirectTo: `${window.location.origin}/`,
           },
         });
         

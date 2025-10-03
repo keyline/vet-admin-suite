@@ -33,8 +33,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().min(10, "Phone number is required for login"),
+  email: z.string().email("Invalid email address").min(1, "Email is required for login"),
+  phone: z.string().optional().or(z.literal("")),
   staff_type_id: z.string().optional().or(z.literal("")),
   specialization: z.string().optional().or(z.literal("")),
   license_number: z.string().optional().or(z.literal("")),
