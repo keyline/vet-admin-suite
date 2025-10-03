@@ -90,6 +90,26 @@ export function MedicineDialog({
     },
   });
 
+  const { data: units = [] } = useQuery({
+    queryKey: ["medicine-units"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("medicines")
+        .select("unit")
+        .not("unit", "is", null)
+        .order("unit");
+      
+      if (error) throw error;
+      
+      // Get unique units
+      const uniqueUnits = Array.from(
+        new Set(data.map((item) => item.unit).filter(Boolean))
+      ) as string[];
+      
+      return uniqueUnits;
+    },
+  });
+
   const form = useForm<MedicineFormValues>({
     resolver: zodResolver(medicineSchema),
     defaultValues: {
@@ -233,11 +253,60 @@ export function MedicineDialog({
                 control={form.control}
                 name="unit"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., tablets, ml" {...field} />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value || "Select or type unit"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Search or type new unit..."
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              Press Enter to add "{field.value}"
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {units.map((unit) => (
+                                <CommandItem
+                                  key={unit}
+                                  value={unit}
+                                  onSelect={() => {
+                                    field.onChange(unit);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      unit === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {unit}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
