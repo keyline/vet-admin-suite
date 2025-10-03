@@ -214,75 +214,115 @@ const Admissions = () => {
         return;
       }
 
-      // 1. Create or find owner
+      const isEditMode = !!petId && !!petData;
+
+      // 1. Create or update owner
       let ownerId: string;
       
-      if (values.unknownOwner) {
-        // Create a generic unknown owner entry
-        const { data: unknownOwnerData, error: unknownOwnerError } = await supabase
-          .from("pet_owners")
-          .insert({
-            name: "Unknown Owner",
-            phone: "0000000000",
-            address: "Unknown",
-          })
-          .select()
-          .single();
-
-        if (unknownOwnerError) throw unknownOwnerError;
-        ownerId = unknownOwnerData.id;
-      } else {
-        const { data: existingOwner } = await supabase
-          .from("pet_owners")
-          .select("id")
-          .eq("phone", values.ownerPhone!)
-          .maybeSingle();
-
-        if (existingOwner) {
-          ownerId = existingOwner.id;
-          // Update owner information
+      if (isEditMode) {
+        // Update existing owner
+        ownerId = petData.pet_owners?.id;
+        
+        if (!values.unknownOwner) {
           await supabase
             .from("pet_owners")
             .update({
-              name: values.ownerName!,
-              address: values.ownerAddress,
-              email: values.ownerEmail || null,
-            })
-            .eq("id", ownerId);
-        } else {
-          const { data: newOwner, error: ownerError } = await supabase
-            .from("pet_owners")
-            .insert({
               name: values.ownerName!,
               phone: values.ownerPhone!,
               address: values.ownerAddress,
               email: values.ownerEmail || null,
             })
+            .eq("id", ownerId);
+        }
+      } else {
+        // Create new owner (existing logic)
+        if (values.unknownOwner) {
+          const { data: unknownOwnerData, error: unknownOwnerError } = await supabase
+            .from("pet_owners")
+            .insert({
+              name: "Unknown Owner",
+              phone: "0000000000",
+              address: "Unknown",
+            })
             .select()
             .single();
 
-          if (ownerError) throw ownerError;
-          ownerId = newOwner.id;
+          if (unknownOwnerError) throw unknownOwnerError;
+          ownerId = unknownOwnerData.id;
+        } else {
+          const { data: existingOwner } = await supabase
+            .from("pet_owners")
+            .select("id")
+            .eq("phone", values.ownerPhone!)
+            .maybeSingle();
+
+          if (existingOwner) {
+            ownerId = existingOwner.id;
+            await supabase
+              .from("pet_owners")
+              .update({
+                name: values.ownerName!,
+                address: values.ownerAddress,
+                email: values.ownerEmail || null,
+              })
+              .eq("id", ownerId);
+          } else {
+            const { data: newOwner, error: ownerError } = await supabase
+              .from("pet_owners")
+              .insert({
+                name: values.ownerName!,
+                phone: values.ownerPhone!,
+                address: values.ownerAddress,
+                email: values.ownerEmail || null,
+              })
+              .select()
+              .single();
+
+            if (ownerError) throw ownerError;
+            ownerId = newOwner.id;
+          }
         }
       }
 
-      // 2. Create pet
-      const { data: pet, error: petError } = await supabase
-        .from("pets")
-        .insert({
-          name: values.petName || "Unknown",
-          owner_id: ownerId,
-          species: values.species,
-          gender: values.gender,
-          age: values.age,
-          weight: values.weight,
-          color: values.color,
-          breed: values.breed,
-        })
-        .select()
-        .single();
+      // 2. Create or update pet
+      let petRecordId: string;
+      
+      if (isEditMode) {
+        // Update existing pet
+        const { error: petError } = await supabase
+          .from("pets")
+          .update({
+            species: values.species,
+            gender: values.gender,
+            age: values.age,
+            weight: values.weight,
+            color: values.color,
+            breed: values.breed,
+          })
+          .eq("id", petId);
 
-      if (petError) throw petError;
+        if (petError) throw petError;
+        petRecordId = petId;
+      } else {
+        // Create new pet
+        const { data: pet, error: petError } = await supabase
+          .from("pets")
+          .insert({
+            name: values.petName || "Unknown",
+            owner_id: ownerId,
+            species: values.species,
+            gender: values.gender,
+            age: values.age,
+            weight: values.weight,
+            color: values.color,
+            breed: values.breed,
+          })
+          .select()
+          .single();
+
+        if (petError) throw petError;
+        petRecordId = pet.id;
+      }
 
       // 3. Prepare antibiotics schedule
       const antibioticsSchedule = {
@@ -292,27 +332,49 @@ const Admissions = () => {
         day5: values.antibioticDay5 || null,
       };
 
-      // 4. Create admission with auto-generated admission number
-      const { data: admission, error: admissionError } = await supabase
-        .from("admissions")
-        .insert([{
-          pet_id: pet.id,
-          admission_date: values.admissionDate.toISOString(),
-          cage_id: values.cageId || null,
-          admitted_by: null,
-          reason: values.reason,
-          brought_by: values.broughtBy === "unknown" ? null : values.broughtBy,
-          xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
-          operation_date: values.operationDate?.toISOString().split('T')[0] || null,
-          antibiotics_schedule: antibioticsSchedule as any,
-          blood_test_report: values.bloodTestReport || null,
-          payment_received: values.paymentReceived || 0,
-          status: "admitted" as any,
-        }])
-        .select()
-        .single();
+      // 4. Create or update admission
+      if (isEditMode && petData.admissions && petData.admissions[0]) {
+        // Update existing admission
+        const admissionId = petData.admissions[0].id;
+        const { error: admissionError } = await supabase
+          .from("admissions")
+          .update({
+            admission_date: values.admissionDate.toISOString(),
+            cage_id: values.cageId || null,
+            reason: values.reason,
+            brought_by: values.broughtBy === "unknown" ? null : values.broughtBy,
+            xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
+            operation_date: values.operationDate?.toISOString().split('T')[0] || null,
+            antibiotics_schedule: antibioticsSchedule as any,
+            blood_test_report: values.bloodTestReport || null,
+            payment_received: values.paymentReceived || 0,
+          })
+          .eq("id", admissionId);
 
-      if (admissionError) throw admissionError;
+        if (admissionError) throw admissionError;
+      } else {
+        // Create new admission
+        const { error: admissionError } = await supabase
+          .from("admissions")
+          .insert([{
+            pet_id: petRecordId,
+            admission_date: values.admissionDate.toISOString(),
+            cage_id: values.cageId || null,
+            admitted_by: null,
+            reason: values.reason,
+            brought_by: values.broughtBy === "unknown" ? null : values.broughtBy,
+            xray_date: values.xrayDate?.toISOString().split('T')[0] || null,
+            operation_date: values.operationDate?.toISOString().split('T')[0] || null,
+            antibiotics_schedule: antibioticsSchedule as any,
+            blood_test_report: values.bloodTestReport || null,
+            payment_received: values.paymentReceived || 0,
+            status: "admitted" as any,
+          }])
+          .select()
+          .single();
+
+        if (admissionError) throw admissionError;
+      }
 
       // 5. Update cage status if assigned
       if (values.cageId) {
@@ -322,13 +384,13 @@ const Admissions = () => {
           .eq("id", values.cageId);
       }
 
-      toast.success("Admission created successfully");
+      toast.success(isEditMode ? "Admission updated successfully" : "Admission created successfully");
       queryClient.invalidateQueries({ queryKey: ["admissions"] });
       queryClient.invalidateQueries({ queryKey: ["pets"] });
       navigate("/pets");
     } catch (error: any) {
-      console.error("Error creating admission:", error);
-      toast.error(error.message || "Failed to create admission");
+      console.error("Error saving admission:", error);
+      toast.error(error.message || "Failed to save admission");
     } finally {
       setIsSubmitting(false);
     }
@@ -875,7 +937,9 @@ const Admissions = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Admission"}
+                {isSubmitting 
+                  ? (petId ? "Updating..." : "Creating...") 
+                  : (petId ? "Update Admission" : "Create Admission")}
               </Button>
             </div>
           </form>
