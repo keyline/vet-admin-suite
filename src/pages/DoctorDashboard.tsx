@@ -54,6 +54,7 @@ const DoctorDashboard = () => {
             species,
             breed,
             age,
+            microchip_id,
             pet_owners!inner(
               name,
               phone
@@ -169,7 +170,7 @@ const DoctorDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Admission No.</TableHead>
+                    <TableHead>Tag Number</TableHead>
                     <TableHead>Species/Breed</TableHead>
                     <TableHead>Cage Location</TableHead>
                     <TableHead>Admission Date</TableHead>
@@ -181,7 +182,7 @@ const DoctorDashboard = () => {
                   {assignedPets.map((admission: any) => (
                     <TableRow key={admission.id}>
                       <TableCell className="font-medium">
-                        {admission.admission_number}
+                        {admission.pets?.microchip_id || "-"}
                       </TableCell>
                       <TableCell>
                         {admission.pets?.species}
