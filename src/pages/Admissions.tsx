@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,8 @@ const Admissions = () => {
   const [displayTagNumber, setDisplayTagNumber] = useState<string>("");
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [receiptPdfUrl, setReceiptPdfUrl] = useState<string | null>(null);
+  const [ownerSearchOpen, setOwnerSearchOpen] = useState(false);
+  const [ownerSearchValue, setOwnerSearchValue] = useState("");
 
   const form = useForm<AdmissionFormValues>({
     resolver: zodResolver(admissionFormSchema),
@@ -83,6 +86,20 @@ const Admissions = () => {
   });
 
   const unknownOwner = form.watch("unknownOwner");
+
+  // Fetch all pet owners for autocomplete
+  const { data: allOwners } = useQuery({
+    queryKey: ["all_pet_owners"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pet_owners")
+        .select("id, name, phone, address, email")
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Fetch pet and admission data if petId is provided
   const { data: petData, isLoading: isPetLoading } = useQuery({
@@ -666,16 +683,87 @@ const Admissions = () => {
                   control={form.control}
                   name="ownerName"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Admitted By</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Owner name" 
-                          {...field} 
-                          disabled={unknownOwner}
-                          className={unknownOwner ? "opacity-50 cursor-not-allowed" : ""}
-                        />
-                      </FormControl>
+                      <Popover open={ownerSearchOpen} onOpenChange={setOwnerSearchOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              disabled={unknownOwner}
+                              className={cn(
+                                "justify-between",
+                                !field.value && "text-muted-foreground",
+                                unknownOwner && "opacity-50 cursor-not-allowed"
+                              )}
+                            >
+                              {field.value || "Select or type owner name"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0 bg-popover z-50" align="start">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Search or type new owner name..." 
+                              value={ownerSearchValue}
+                              onValueChange={setOwnerSearchValue}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                <div className="p-2">
+                                  <p className="text-sm text-muted-foreground mb-2">No existing owner found.</p>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      field.onChange(ownerSearchValue);
+                                      setOwnerSearchOpen(false);
+                                      // Clear other fields for new owner
+                                      form.setValue("ownerPhone", "");
+                                      form.setValue("ownerAddress", "");
+                                      form.setValue("ownerEmail", "");
+                                    }}
+                                  >
+                                    Use "{ownerSearchValue}" as new owner
+                                  </Button>
+                                </div>
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {allOwners?.map((owner) => (
+                                  <CommandItem
+                                    key={owner.id}
+                                    value={owner.name}
+                                    onSelect={() => {
+                                      field.onChange(owner.name);
+                                      form.setValue("ownerPhone", owner.phone);
+                                      form.setValue("ownerAddress", owner.address || "");
+                                      form.setValue("ownerEmail", owner.email || "");
+                                      setOwnerSearchOpen(false);
+                                      setOwnerSearchValue("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        owner.name === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span>{owner.name}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {owner.phone} {owner.address && `• ${owner.address}`}
+                                      </span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
