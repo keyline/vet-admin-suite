@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   Shield,
+  Banknote,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -42,6 +43,7 @@ const navigationItems = [
   { title: "Pet Owners", url: "/owners", icon: Users, module: "pet_owners" },
   { title: "Pets", url: "/pets", icon: PawPrint, module: "pets" },
   { title: "Admissions", url: "/admissions", icon: ClipboardList, module: "admissions" },
+  { title: "Donations", url: "/donations", icon: Banknote, module: null },
   { title: "Doctor Visits", url: "/visits", icon: Stethoscope, module: "doctor_visits" },
   { title: "Inventory", url: "/inventory", icon: Package, module: "inventory" },
   { title: "Billing", url: "/billing", icon: Receipt, module: "billing" },
