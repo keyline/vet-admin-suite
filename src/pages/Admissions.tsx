@@ -166,12 +166,31 @@ const Admissions = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cages")
-        .select("id, cage_number, name, rooms(name)")
+        .select("id, cage_number, name, max_pet_count, rooms(name)")
         .eq("status", "available")
         .eq("active", true)
         .order("cage_number");
+      
       if (error) throw error;
-      return data;
+      
+      // Filter cages that have space (current count < max count)
+      const availableCages = await Promise.all(
+        (data || []).map(async (cage) => {
+          const { data: currentCount } = await supabase.rpc(
+            'get_cage_current_pet_count',
+            { cage_uuid: cage.id }
+          );
+          
+          return {
+            ...cage,
+            current_count: currentCount || 0,
+            has_space: (currentCount || 0) < cage.max_pet_count
+          };
+        })
+      );
+      
+      // Only return cages that have space
+      return availableCages.filter(cage => cage.has_space);
     },
   });
 
@@ -464,7 +483,7 @@ const Admissions = () => {
                           <SelectContent>
                             {cages?.map((cage) => (
                               <SelectItem key={cage.id} value={cage.id}>
-                                {cage.cage_number} - {cage.name} ({cage.rooms?.name})
+                                {cage.cage_number} - {cage.name} ({cage.rooms?.name}) - {cage.current_count}/{cage.max_pet_count}
                               </SelectItem>
                             ))}
                           </SelectContent>
