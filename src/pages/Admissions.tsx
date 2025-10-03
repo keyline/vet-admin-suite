@@ -449,7 +449,7 @@ const Admissions = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Unknown</SelectItem>
+                          <SelectItem value="unknown">Unknown</SelectItem>
                           {staff?.map((member) => (
                             <SelectItem key={member.id} value={member.id}>
                               {member.name}
