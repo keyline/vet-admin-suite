@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Shield,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -37,40 +38,76 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Pet Owners", url: "/owners", icon: Users },
-  { title: "Pets", url: "/pets", icon: PawPrint },
-  { title: "Admissions", url: "/admissions", icon: ClipboardList },
-  { title: "Doctor Visits", url: "/visits", icon: Stethoscope },
-  { title: "Inventory", url: "/inventory", icon: Package },
-  { title: "Billing", url: "/billing", icon: Receipt },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, module: null },
+  { title: "Pet Owners", url: "/owners", icon: Users, module: "pet_owners" },
+  { title: "Pets", url: "/pets", icon: PawPrint, module: "pets" },
+  { title: "Admissions", url: "/admissions", icon: ClipboardList, module: "admissions" },
+  { title: "Doctor Visits", url: "/visits", icon: Stethoscope, module: "doctor_visits" },
+  { title: "Inventory", url: "/inventory", icon: Package, module: "inventory" },
+  { title: "Billing", url: "/billing", icon: Receipt, module: "billing" },
 ];
 
 const masterItems = [
-  { title: "Medicines", url: "/medicines", icon: Pill },
-  { title: "Buildings", url: "/masters/buildings", icon: Building2 },
-  { title: "Rooms", url: "/masters/rooms", icon: Building2 },
-  { title: "Cages", url: "/masters/cages", icon: Building2 },
-  { title: "Staff", url: "/masters/staff", icon: Users },
-  { title: "Staff Types", url: "/masters/staff-types", icon: Users },
-  { title: "Treatments", url: "/masters/treatments", icon: Heart },
-  { title: "Pet Types", url: "/masters/pet-types", icon: PawPrint },
+  { title: "Medicines", url: "/medicines", icon: Pill, module: "medicines" },
+  { title: "Buildings", url: "/masters/buildings", icon: Building2, module: "buildings" },
+  { title: "Rooms", url: "/masters/rooms", icon: Building2, module: "rooms" },
+  { title: "Cages", url: "/masters/cages", icon: Building2, module: "cages" },
+  { title: "Staff", url: "/masters/staff", icon: Users, module: "staff" },
+  { title: "Staff Types", url: "/masters/staff-types", icon: Users, module: "staff_types" },
+  { title: "Treatments", url: "/masters/treatments", icon: Heart, module: "treatments" },
+  { title: "Pet Types", url: "/masters/pet-types", icon: PawPrint, module: "pet_types" },
 ];
 
 const adminItems = [
-  { title: "Role Management", url: "/role-management", icon: Shield },
+  { title: "Role Management", url: "/role-management", icon: Shield, module: "role_management" },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
   
   const [mainMenuOpen, setMainMenuOpen] = useState(true);
   const [masterDataOpen, setMasterDataOpen] = useState(true);
   const [adminMenuOpen, setAdminMenuOpen] = useState(true);
+  const [userPermissions, setUserPermissions] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!user) return;
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (!roles || roles.length === 0) {
+        setUserPermissions(new Set());
+        return;
+      }
+
+      const { data: permissions } = await supabase
+        .from('role_permissions')
+        .select('module')
+        .in('role', roles.map(r => r.role));
+
+      const permissionSet = new Set(permissions?.map(p => p.module) || []);
+      setUserPermissions(permissionSet);
+    };
+
+    fetchPermissions();
+  }, [user]);
+
+  const hasPermission = (module: string | null) => {
+    if (!module) return true; // Dashboard is always accessible
+    return userPermissions.has(module);
+  };
+
+  const filteredNavItems = navigationItems.filter(item => hasPermission(item.module));
+  const filteredMasterItems = masterItems.filter(item => hasPermission(item.module));
+  const filteredAdminItems = adminItems.filter(item => hasPermission(item.module));
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -99,7 +136,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
+                  {filteredNavItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} end className={getNavCls}>
@@ -126,7 +163,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {masterItems.map((item) => (
+                  {filteredMasterItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} end className={getNavCls}>
@@ -153,7 +190,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {adminItems.map((item) => (
+                  {filteredAdminItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={item.url} end className={getNavCls}>
