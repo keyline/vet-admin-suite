@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BuildingDialog } from "@/components/masters/BuildingDialog";
+import { StaffDialog } from "@/components/masters/StaffDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,18 +28,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const Buildings = () => {
+const Staff = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState<any>(null);
+  const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [buildingToDelete, setBuildingToDelete] = useState<any>(null);
+  const [staffToDelete, setStaffToDelete] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: buildings, isLoading } = useQuery({
-    queryKey: ["buildings"],
+  const { data: staff, isLoading } = useQuery({
+    queryKey: ["staff"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("buildings")
+        .from("staff")
         .select("*")
         .order("name");
       if (error) throw error;
@@ -50,7 +50,7 @@ const Buildings = () => {
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
       const { data, error } = await supabase
-        .from("buildings")
+        .from("staff")
         .insert([values])
         .select()
         .single();
@@ -58,14 +58,14 @@ const Buildings = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
-      toast({ title: "Building created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      toast({ title: "Staff member created successfully" });
       setDialogOpen(false);
-      setSelectedBuilding(null);
+      setSelectedStaff(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error creating building",
+        title: "Error creating staff member",
         description: error.message,
         variant: "destructive",
       });
@@ -75,7 +75,7 @@ const Buildings = () => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: any }) => {
       const { data, error } = await supabase
-        .from("buildings")
+        .from("staff")
         .update(values)
         .eq("id", id)
         .select()
@@ -84,14 +84,14 @@ const Buildings = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
-      toast({ title: "Building updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      toast({ title: "Staff member updated successfully" });
       setDialogOpen(false);
-      setSelectedBuilding(null);
+      setSelectedStaff(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error updating building",
+        title: "Error updating staff member",
         description: error.message,
         variant: "destructive",
       });
@@ -100,18 +100,18 @@ const Buildings = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("buildings").delete().eq("id", id);
+      const { error } = await supabase.from("staff").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
-      toast({ title: "Building deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      toast({ title: "Staff member deleted successfully" });
       setDeleteDialogOpen(false);
-      setBuildingToDelete(null);
+      setStaffToDelete(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error deleting building",
+        title: "Error deleting staff member",
         description: error.message,
         variant: "destructive",
       });
@@ -119,20 +119,20 @@ const Buildings = () => {
   });
 
   const handleSubmit = (values: any) => {
-    if (selectedBuilding) {
-      updateMutation.mutate({ id: selectedBuilding.id, values });
+    if (selectedStaff) {
+      updateMutation.mutate({ id: selectedStaff.id, values });
     } else {
       createMutation.mutate(values);
     }
   };
 
-  const handleEdit = (building: any) => {
-    setSelectedBuilding(building);
+  const handleEdit = (staff: any) => {
+    setSelectedStaff(staff);
     setDialogOpen(true);
   };
 
-  const handleDelete = (building: any) => {
-    setBuildingToDelete(building);
+  const handleDelete = (staff: any) => {
+    setStaffToDelete(staff);
     setDeleteDialogOpen(true);
   };
 
@@ -141,25 +141,25 @@ const Buildings = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Buildings</h2>
-            <p className="text-muted-foreground">Manage your facility structure</p>
+            <h2 className="text-3xl font-bold tracking-tight">Staff</h2>
+            <p className="text-muted-foreground">Manage hospital staff members</p>
           </div>
           <Button
             className="gap-2"
             onClick={() => {
-              setSelectedBuilding(null);
+              setSelectedStaff(null);
               setDialogOpen(true);
             }}
           >
             <Plus className="h-4 w-4" />
-            Add Building
+            Add Staff
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>All Buildings</CardTitle>
-            <CardDescription>Configure buildings, rooms, and cages</CardDescription>
+            <CardTitle>All Staff</CardTitle>
+            <CardDescription>View and manage hospital staff</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -168,42 +168,48 @@ const Buildings = () => {
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
-            ) : !buildings || buildings.length === 0 ? (
+            ) : !staff || staff.length === 0 ? (
               <div className="flex items-center justify-center py-12 text-muted-foreground">
-                No buildings found. Click "Add Building" to get started.
+                No staff members found. Click "Add Staff" to get started.
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Specialization</TableHead>
+                    <TableHead>License</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {buildings.map((building) => (
-                    <TableRow key={building.id}>
-                      <TableCell className="font-medium">{building.name}</TableCell>
-                      <TableCell>{building.description || "-"}</TableCell>
+                  {staff.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell>{member.email || "-"}</TableCell>
+                      <TableCell>{member.phone || "-"}</TableCell>
+                      <TableCell>{member.specialization || "-"}</TableCell>
+                      <TableCell>{member.license_number || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant={building.active ? "default" : "secondary"}>
-                          {building.active ? "Active" : "Inactive"}
+                        <Badge variant={member.active ? "default" : "secondary"}>
+                          {member.active ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleEdit(building)}
+                          onClick={() => handleEdit(member)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(building)}
+                          onClick={() => handleDelete(member)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -217,10 +223,10 @@ const Buildings = () => {
         </Card>
       </div>
 
-      <BuildingDialog
+      <StaffDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        building={selectedBuilding}
+        staff={selectedStaff}
         onSubmit={handleSubmit}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
@@ -230,13 +236,13 @@ const Buildings = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the building.
+              This action cannot be undone. This will permanently delete the staff member.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => buildingToDelete && deleteMutation.mutate(buildingToDelete.id)}
+              onClick={() => staffToDelete && deleteMutation.mutate(staffToDelete.id)}
             >
               Delete
             </AlertDialogAction>
@@ -247,4 +253,4 @@ const Buildings = () => {
   );
 };
 
-export default Buildings;
+export default Staff;

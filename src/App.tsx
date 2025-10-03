@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import Owners from "./pages/Owners";
 import Pets from "./pages/Pets";
 import Buildings from "./pages/Buildings";
+import Staff from "./pages/Staff";
+import Treatments from "./pages/Treatments";
+import Medicines from "./pages/Medicines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +56,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Buildings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/staff"
+              element={
+                <ProtectedRoute>
+                  <Staff />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/masters/treatments"
+              element={
+                <ProtectedRoute>
+                  <Treatments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/medicines"
+              element={
+                <ProtectedRoute>
+                  <Medicines />
                 </ProtectedRoute>
               }
             />
