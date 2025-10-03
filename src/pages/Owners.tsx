@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { jsPDF } from "jspdf";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,8 @@ const Owners = () => {
   const [ownerToDelete, setOwnerToDelete] = useState<any>(null);
   const [donationsDialogOpen, setDonationsDialogOpen] = useState(false);
   const [selectedOwnerForDonations, setSelectedOwnerForDonations] = useState<any>(null);
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [receiptPdfUrl, setReceiptPdfUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { canAdd, canEdit, canDelete } = usePermissions();
 
@@ -97,6 +101,43 @@ const Owners = () => {
   const handleDonationClick = (owner: any) => {
     setSelectedOwnerForDonations(owner);
     setDonationsDialogOpen(true);
+  };
+
+  const generateDonationReceipt = (donation: any, owner: any) => {
+    const doc = new jsPDF();
+    
+    // Add content to PDF
+    doc.setFontSize(20);
+    doc.text("Donation Receipt", 105, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Receipt Number: ${donation.admission_number}`, 20, 40);
+    doc.text(`Date: ${format(new Date(donation.admission_date), "PPP")}`, 20, 50);
+    
+    doc.setFontSize(14);
+    doc.text("Donor Information:", 20, 70);
+    doc.setFontSize(12);
+    doc.text(`Name: ${owner.name}`, 20, 80);
+    doc.text(`Address: ${owner.address || "N/A"}`, 20, 90);
+    doc.text(`Phone: ${owner.phone}`, 20, 100);
+    if (owner.email) {
+      doc.text(`Email: ${owner.email}`, 20, 110);
+    }
+    
+    doc.setFontSize(14);
+    doc.text("Donation Details:", 20, 130);
+    doc.setFontSize(12);
+    doc.text(`Amount Received: ₹${Number(donation.payment_received).toFixed(2)}`, 20, 140);
+    
+    doc.setFontSize(10);
+    doc.text("Thank you for your generous donation to our veterinary shelter.", 20, 170);
+    doc.text("This receipt serves as confirmation of your contribution.", 20, 180);
+    
+    // Generate blob URL for preview
+    const pdfBlob = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    setReceiptPdfUrl(pdfUrl);
+    setReceiptDialogOpen(true);
   };
 
   const createMutation = useMutation({
@@ -353,7 +394,12 @@ const Owners = () => {
                         ₹{Number(donation.payment_received).toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" className="gap-2" disabled>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={() => generateDonationReceipt(donation, selectedOwnerForDonations)}
+                        >
                           <FileText className="h-4 w-4" />
                           View PDF
                         </Button>
@@ -367,6 +413,49 @@ const Owners = () => {
                 No donation records found.
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Donation Receipt</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            {receiptPdfUrl && (
+              <iframe
+                src={receiptPdfUrl}
+                className="w-full h-[600px] border rounded"
+                title="Donation Receipt"
+              />
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (receiptPdfUrl) {
+                    const link = document.createElement("a");
+                    link.href = receiptPdfUrl;
+                    link.download = `donation-receipt-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+                    link.click();
+                  }
+                }}
+              >
+                Download PDF
+              </Button>
+              <Button
+                onClick={() => {
+                  setReceiptDialogOpen(false);
+                  if (receiptPdfUrl) {
+                    URL.revokeObjectURL(receiptPdfUrl);
+                    setReceiptPdfUrl(null);
+                  }
+                }}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
