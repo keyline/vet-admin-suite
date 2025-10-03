@@ -73,6 +73,7 @@ export function AppSidebar() {
   const [masterDataOpen, setMasterDataOpen] = useState(true);
   const [adminMenuOpen, setAdminMenuOpen] = useState(true);
   const [userPermissions, setUserPermissions] = useState<Set<string>>(new Set());
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -85,6 +86,16 @@ export function AppSidebar() {
 
       if (!roles || roles.length === 0) {
         setUserPermissions(new Set());
+        setIsAdmin(false);
+        return;
+      }
+
+      // Check if user is admin or superadmin
+      const adminRole = roles.some(r => r.role === 'admin' || r.role === 'superadmin');
+      setIsAdmin(adminRole);
+
+      if (adminRole) {
+        // Admins see everything, no need to fetch permissions
         return;
       }
 
@@ -102,6 +113,7 @@ export function AppSidebar() {
 
   const hasPermission = (module: string | null) => {
     if (!module) return true; // Dashboard is always accessible
+    if (isAdmin) return true; // Admins see everything
     return userPermissions.has(module);
   };
 
