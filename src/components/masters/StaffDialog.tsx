@@ -112,6 +112,14 @@ export function StaffDialog({
       });
       return;
     }
+    // Validate password for edit if provided
+    if (staff && values.password && values.password.length < 6) {
+      form.setError("password", {
+        type: "manual",
+        message: "Password must be at least 6 characters"
+      });
+      return;
+    }
     onSubmit(values);
   };
 
@@ -165,21 +173,25 @@ export function StaffDialog({
                 </FormItem>
               )}
             />
-            {!staff && (
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Login password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Password {staff && <span className="text-muted-foreground text-xs">(Leave blank to keep current)</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder={staff ? "Enter new password to change" : "Login password"} 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="staff_type_id"

@@ -114,9 +114,35 @@ const Staff = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: any }) => {
-      // Remove password from staff data (can't update auth password here)
       const { password, ...staffData } = values;
       
+      // First, get the staff member to check if they have a user_id
+      const { data: staffMember } = await supabase
+        .from("staff")
+        .select("user_id")
+        .eq("id", id)
+        .single();
+      
+      // Update password if provided and user_id exists
+      if (password && password.length >= 6 && staffMember?.user_id) {
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(
+          staffMember.user_id,
+          { password }
+        );
+        
+        if (passwordError) {
+          // If admin API fails, try regular user update (works if current user is updating their own password)
+          const { error: regularError } = await supabase.auth.updateUser({
+            password
+          });
+          
+          if (regularError) {
+            throw new Error(`Failed to update password: ${regularError.message}`);
+          }
+        }
+      }
+      
+      // Update staff record
       const { data, error } = await supabase
         .from("staff")
         .update(staffData)
