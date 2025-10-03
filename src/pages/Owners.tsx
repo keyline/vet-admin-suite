@@ -63,24 +63,12 @@ const Owners = () => {
   });
 
   const { data: donations } = useQuery({
-    queryKey: ["owner_donations"],
+    queryKey: ["donations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("admissions")
-        .select(`
-          payment_received, 
-          admission_date, 
-          admission_number,
-          pets!inner (
-            owner_id,
-            pet_owners!inner (
-              id,
-              name
-            )
-          )
-        `)
-        .gt("payment_received", 0)
-        .order("admission_date", { ascending: false });
+        .from("donations")
+        .select("*")
+        .order("donation_date", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -89,13 +77,13 @@ const Owners = () => {
   const getDonationTotal = (ownerId: string) => {
     if (!donations) return 0;
     return donations
-      .filter(d => d.pets?.pet_owners?.id === ownerId)
-      .reduce((sum, d) => sum + (Number(d.payment_received) || 0), 0);
+      .filter(d => d.donor_id === ownerId)
+      .reduce((sum, d) => sum + (Number(d.total_value) || 0), 0);
   };
 
   const getOwnerDonations = (ownerId: string) => {
     if (!donations) return [];
-    return donations.filter(d => d.pets?.pet_owners?.id === ownerId);
+    return donations.filter(d => d.donor_id === ownerId);
   };
 
   const handleDonationClick = (owner: any) => {
@@ -111,8 +99,8 @@ const Owners = () => {
     doc.text("Donation Receipt", 105, 20, { align: "center" });
     
     doc.setFontSize(12);
-    doc.text(`Receipt Number: ${donation.admission_number}`, 20, 40);
-    doc.text(`Date: ${format(new Date(donation.admission_date), "PPP")}`, 20, 50);
+    doc.text(`Receipt Number: ${donation.donation_number}`, 20, 40);
+    doc.text(`Date: ${format(new Date(donation.donation_date), "PPP")}`, 20, 50);
     
     doc.setFontSize(14);
     doc.text("Donor Information:", 20, 70);
@@ -127,7 +115,7 @@ const Owners = () => {
     doc.setFontSize(14);
     doc.text("Donation Details:", 20, 130);
     doc.setFontSize(12);
-    doc.text(`Amount Received: ₹${Number(donation.payment_received).toFixed(2)}`, 20, 140);
+    doc.text(`Amount Received: ₹${Number(donation.total_value).toFixed(2)}`, 20, 140);
     
     doc.setFontSize(10);
     doc.text("Thank you for your generous donation to our veterinary shelter.", 20, 170);
@@ -378,7 +366,7 @@ const Owners = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Admission No.</TableHead>
+                    <TableHead>Donation No.</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Receipt</TableHead>
                   </TableRow>
@@ -387,11 +375,11 @@ const Owners = () => {
                   {getOwnerDonations(selectedOwnerForDonations.id).map((donation, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        {new Date(donation.admission_date).toLocaleDateString('en-IN')}
+                        {new Date(donation.donation_date).toLocaleDateString('en-IN')}
                       </TableCell>
-                      <TableCell>{donation.admission_number}</TableCell>
+                      <TableCell>{donation.donation_number}</TableCell>
                       <TableCell className="font-semibold">
-                        ₹{Number(donation.payment_received).toFixed(2)}
+                        ₹{Number(donation.total_value).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Button 

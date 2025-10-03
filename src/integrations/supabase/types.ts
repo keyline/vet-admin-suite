@@ -428,7 +428,9 @@ export type Database = {
         Row: {
           created_at: string
           donation_date: string
+          donation_number: string
           donor_email: string | null
+          donor_id: string | null
           donor_name: string
           donor_phone: string | null
           id: string
@@ -439,7 +441,9 @@ export type Database = {
         Insert: {
           created_at?: string
           donation_date?: string
+          donation_number?: string
           donor_email?: string | null
+          donor_id?: string | null
           donor_name: string
           donor_phone?: string | null
           id?: string
@@ -450,7 +454,9 @@ export type Database = {
         Update: {
           created_at?: string
           donation_date?: string
+          donation_number?: string
           donor_email?: string | null
+          donor_id?: string | null
           donor_name?: string
           donor_phone?: string | null
           id?: string
@@ -458,7 +464,15 @@ export type Database = {
           total_value?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "donations_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "pet_owners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medicine_allotments: {
         Row: {
@@ -1095,6 +1109,10 @@ export type Database = {
         Returns: undefined
       }
       generate_admission_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_donation_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

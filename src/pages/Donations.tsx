@@ -111,7 +111,7 @@ const Donations = () => {
         .eq("phone", values.phone)
         .maybeSingle();
 
-      let ownerId: string;
+      let ownerId: string | null = null;
 
       if (existingOwner) {
         // Update existing owner
@@ -141,39 +141,28 @@ const Donations = () => {
         ownerId = newOwner.id;
       }
 
-      // Create a dummy pet for the donation (required by admissions table)
-      const { data: pet, error: petError } = await supabase
-        .from("pets")
+      // Create donation record directly in donations table
+      const { data: donation, error: donationError } = await supabase
+        .from("donations")
         .insert({
-          name: "Donation Entry",
-          owner_id: ownerId,
-          species: "Donation",
-          gender: "male",
+          donor_id: ownerId,
+          donor_name: values.donorName,
+          donor_phone: values.phone,
+          donor_email: values.email || null,
+          total_value: values.amount,
+          donation_date: new Date().toISOString().split('T')[0],
+          notes: `Donation received via Donations page`,
         })
         .select()
         .single();
 
-      if (petError) throw petError;
+      if (donationError) throw donationError;
 
-      // Create admission record as donation
-      const { data: admission, error: admissionError } = await supabase
-        .from("admissions")
-        .insert({
-          pet_id: pet.id,
-          reason: "Direct Donation",
-          payment_received: values.amount,
-          status: "discharged",
-        })
-        .select()
-        .single();
-
-      if (admissionError) throw admissionError;
-
-      return { admission, values };
+      return { donation, values };
     },
-    onSuccess: async ({ admission, values }) => {
-      // Generate receipt
-      const receiptNumber = admission.admission_number;
+    onSuccess: async ({ donation, values }) => {
+      // Generate receipt with donation data
+      const receiptNumber = donation.donation_number;
       await generateDonationReceipt(
         values.donorName,
         values.address,
@@ -182,7 +171,7 @@ const Donations = () => {
       );
 
       toast.success("Donation recorded successfully");
-      queryClient.invalidateQueries({ queryKey: ["owner_donations"] });
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
       queryClient.invalidateQueries({ queryKey: ["pet_owners"] });
       form.reset();
     },

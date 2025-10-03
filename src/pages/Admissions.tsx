@@ -539,20 +539,36 @@ const Admissions = () => {
           .eq("id", values.cageId);
       }
 
-      // 6. Generate donation receipt if applicable
+      // 6. Create donation record if payment was received
       if (!values.unknownOwner && values.ownerName && values.ownerAddress && values.paymentReceived && values.paymentReceived > 0) {
         try {
-          // Generate admission number for receipt (you may want to fetch the actual admission number)
-          const receiptNumber = `RCP-${format(new Date(), "yyMMdd")}-${Math.floor(Math.random() * 10000)}`;
+          // Create donation record in donations table
+          const { data: donation, error: donationError } = await supabase
+            .from("donations")
+            .insert({
+              donor_id: ownerId,
+              donor_name: values.ownerName,
+              donor_phone: values.ownerPhone || null,
+              donor_email: values.ownerEmail || null,
+              total_value: values.paymentReceived,
+              donation_date: new Date().toISOString().split('T')[0],
+              notes: `Donation received during admission`,
+            })
+            .select()
+            .single();
+
+          if (donationError) throw donationError;
+
+          // Generate donation receipt
           await generateDonationReceipt(
             values.ownerName,
             values.ownerAddress,
             values.paymentReceived,
-            receiptNumber
+            donation.donation_number
           );
         } catch (receiptError) {
-          console.error("Error generating receipt:", receiptError);
-          toast.error("Failed to generate donation receipt, but admission was saved");
+          console.error("Error creating donation record:", receiptError);
+          toast.error("Failed to record donation, but admission was saved");
         }
       }
 
