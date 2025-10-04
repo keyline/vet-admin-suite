@@ -1195,6 +1195,7 @@ export type Database = {
         | "receptionist"
         | "store_keeper"
         | "accountant"
+        | "staff"
       bill_status: "draft" | "pending" | "paid" | "cancelled"
       cage_status: "available" | "occupied" | "maintenance" | "reserved"
       permission_type: "view" | "add" | "edit" | "delete"
@@ -1352,6 +1353,7 @@ export const Constants = {
         "receptionist",
         "store_keeper",
         "accountant",
+        "staff",
       ],
       bill_status: ["draft", "pending", "paid", "cancelled"],
       cage_status: ["available", "occupied", "maintenance", "reserved"],

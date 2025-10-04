@@ -35,7 +35,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   active: z.boolean().default(true),
-  role_mapping: z.enum(["admin", "doctor", "receptionist", "store_keeper", "accountant"]).nullable().optional(),
+  role_mapping: z.enum(["admin", "doctor", "receptionist", "store_keeper", "accountant", "staff"]).nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -182,6 +182,7 @@ export function StaffTypeDialog({
                       <SelectItem value="receptionist">Receptionist</SelectItem>
                       <SelectItem value="store_keeper">Store Keeper</SelectItem>
                       <SelectItem value="accountant">Accountant</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
