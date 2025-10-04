@@ -31,7 +31,7 @@ export const MedicineScheduler = ({ value = [], onChange }: MedicineSchedulerPro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("medicines")
-        .select("id, name")
+        .select("id, name, unit")
         .eq("active", true)
         .order("name");
       if (error) throw error;
@@ -136,11 +136,19 @@ export const MedicineScheduler = ({ value = [], onChange }: MedicineSchedulerPro
 
                   <div>
                     <Label>Dose</Label>
-                    <Input
-                      placeholder="e.g., 500mg"
-                      value={entry.dose}
-                      onChange={(e) => updateMedicineEntry(entry.id, "dose", e.target.value)}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="e.g., 500"
+                        value={entry.dose}
+                        onChange={(e) => updateMedicineEntry(entry.id, "dose", e.target.value)}
+                        className="flex-1"
+                      />
+                      {entry.medicine_id && (
+                        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[3rem]">
+                          {medicines?.find((m) => m.id === entry.medicine_id)?.unit || "unit"}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div>
