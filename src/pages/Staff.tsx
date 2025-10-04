@@ -177,15 +177,56 @@ const Staff = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: any }) => {
+    mutationFn: async ({ id, values, isRoleOnly }: { id: string; values: any; isRoleOnly?: boolean }) => {
       const { password, ...staffData } = values;
+      
+      // If this is a role-only user (no staff record), create a staff record instead
+      if (isRoleOnly) {
+        const { data, error } = await supabase
+          .from("staff")
+          .insert([{ ...staffData, user_id: id }])
+          .select()
+          .single();
+        if (error) throw error;
+        
+        // Update password if provided
+        if (password && password.length >= 6) {
+          const { error: passwordError } = await supabase.auth.admin.updateUserById(
+            id,
+            { password }
+          );
+          
+          if (passwordError) {
+            const { error: regularError } = await supabase.auth.updateUser({
+              password
+            });
+            
+            if (regularError) {
+              throw new Error(`Failed to update password: ${regularError.message}`);
+            }
+          }
+        }
+        
+        return data;
+      }
       
       // First, get the staff member to check if they have a user_id
       const { data: staffMember } = await supabase
         .from("staff")
         .select("user_id")
         .eq("id", id)
-        .single();
+        .maybeSingle();
+      
+      // If no staff record found, create one instead of updating
+      if (!staffMember) {
+        const { data, error } = await supabase
+          .from("staff")
+          .insert([{ ...staffData, user_id: id }])
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
       
       // Update password if provided and user_id exists
       if (password && password.length >= 6 && staffMember?.user_id) {
@@ -253,7 +294,11 @@ const Staff = () => {
 
   const handleSubmit = (values: any) => {
     if (selectedStaff) {
-      updateMutation.mutate({ id: selectedStaff.id, values });
+      updateMutation.mutate({ 
+        id: selectedStaff.id, 
+        values,
+        isRoleOnly: selectedStaff.isRoleOnly 
+      });
     } else {
       createMutation.mutate(values);
     }
