@@ -16,7 +16,7 @@ import Buildings from "./pages/Buildings";
 import Rooms from "./pages/Rooms";
 import Cages from "./pages/Cages";
 import Staff from "./pages/Staff";
-import StaffTypes from "./pages/StaffTypes";
+import StaffRoleManagement from "./pages/StaffRoleManagement";
 import Treatments from "./pages/Treatments";
 import Medicines from "./pages/Medicines";
 import PetTypes from "./pages/PetTypes";
@@ -112,10 +112,10 @@ const App = () => (
               }
             />
             <Route
-              path="/masters/staff-types"
+              path="/admin/staff-roles"
               element={
                 <ProtectedRoute>
-                  <StaffTypes />
+                  <StaffRoleManagement />
                 </ProtectedRoute>
               }
             />

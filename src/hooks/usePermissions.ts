@@ -14,7 +14,6 @@ type AppModule =
   | "rooms"
   | "cages"
   | "staff"
-  | "staff_types"
   | "treatments"
   | "pet_types"
   | "role_management";

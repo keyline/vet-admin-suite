@@ -55,13 +55,13 @@ const masterItems = [
   { title: "Rooms", url: "/masters/rooms", icon: Building2, module: "rooms" },
   { title: "Cages", url: "/masters/cages", icon: Building2, module: "cages" },
   { title: "Staff", url: "/masters/staff", icon: Users, module: "staff" },
-  { title: "Staff Types", url: "/masters/staff-types", icon: Users, module: "staff_types" },
   { title: "Treatments", url: "/masters/treatments", icon: Heart, module: "treatments" },
   { title: "Pet Types", url: "/masters/pet-types", icon: PawPrint, module: "pet_types" },
 ];
 
 const adminItems = [
   { title: "Role Management", url: "/role-management", icon: Shield, module: "role_management" },
+  { title: "Staff Role Management", url: "/admin/staff-roles", icon: Shield, module: "staff" },
 ];
 
 export function AppSidebar() {

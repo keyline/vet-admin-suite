@@ -987,7 +987,6 @@ export type Database = {
           name: string
           phone: string | null
           specialization: string | null
-          staff_type_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1000,7 +999,6 @@ export type Database = {
           name: string
           phone?: string | null
           specialization?: string | null
-          staff_type_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1013,47 +1011,8 @@ export type Database = {
           name?: string
           phone?: string | null
           specialization?: string | null
-          staff_type_id?: string | null
           updated_at?: string
           user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_staff_type_id_fkey"
-            columns: ["staff_type_id"]
-            isOneToOne: false
-            referencedRelation: "staff_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      staff_types: {
-        Row: {
-          active: boolean
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          role_mapping: Database["public"]["Enums"]["app_role"] | null
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          role_mapping?: Database["public"]["Enums"]["app_role"] | null
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          role_mapping?: Database["public"]["Enums"]["app_role"] | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1174,20 +1133,19 @@ export type Database = {
       allotment_status: "pending" | "issued" | "returned" | "consumed"
       app_module:
         | "pets"
-        | "owners"
+        | "pet_owners"
         | "admissions"
+        | "doctor_visits"
+        | "inventory"
+        | "billing"
         | "medicines"
-        | "treatments"
-        | "staff"
         | "buildings"
         | "rooms"
         | "cages"
+        | "staff"
+        | "treatments"
         | "pet_types"
-        | "staff_types"
-        | "billing"
-        | "donations"
-        | "purchase_orders"
-        | "doctor_visits"
+        | "role_management"
       app_role:
         | "superadmin"
         | "admin"
@@ -1331,20 +1289,19 @@ export const Constants = {
       allotment_status: ["pending", "issued", "returned", "consumed"],
       app_module: [
         "pets",
-        "owners",
+        "pet_owners",
         "admissions",
+        "doctor_visits",
+        "inventory",
+        "billing",
         "medicines",
-        "treatments",
-        "staff",
         "buildings",
         "rooms",
         "cages",
+        "staff",
+        "treatments",
         "pet_types",
-        "staff_types",
-        "billing",
-        "donations",
-        "purchase_orders",
-        "doctor_visits",
+        "role_management",
       ],
       app_role: [
         "superadmin",
