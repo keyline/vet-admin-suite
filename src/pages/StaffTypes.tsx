@@ -116,22 +116,32 @@ export default function StaffTypes() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Role Mapping</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {staffTypes?.map((staffType) => (
                 <TableRow key={staffType.id}>
-                  <TableCell className="font-medium">{staffType.name}</TableCell>
-                  <TableCell>{staffType.description || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant={staffType.active ? "default" : "secondary"}>
-                      {staffType.active ? "Active" : "Inactive"}
+                <TableCell className="font-medium">{staffType.name}</TableCell>
+                <TableCell>{staffType.description || "-"}</TableCell>
+                <TableCell>
+                  {staffType.role_mapping ? (
+                    <Badge variant="outline" className="capitalize">
+                      {staffType.role_mapping.replace('_', ' ')}
                     </Badge>
-                  </TableCell>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">No role assigned</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={staffType.active ? "default" : "secondary"}>
+                    {staffType.active ? "Active" : "Inactive"}
+                  </Badge>
+                </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {canEdit('staff_types') && (
@@ -158,7 +168,7 @@ export default function StaffTypes() {
               ))}
               {!staffTypes?.length && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     No staff types found
                   </TableCell>
                 </TableRow>
