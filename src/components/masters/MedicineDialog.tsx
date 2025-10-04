@@ -41,17 +41,17 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const medicineSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  generic_name: z.string().optional(),
-  manufacturer: z.string().optional(),
-  category: z.string().optional(),
-  unit: z.string().min(1, "Unit is required"),
-  packaging: z.string().optional(),
-  units_per_package: z.coerce.number().int().min(1, "Units per package must be at least 1").default(1),
-  price_per_package: z.coerce.number().min(0, "Price must be positive"),
-  stock_quantity: z.coerce.number().int().min(0, "Quantity must be positive"),
-  reorder_level: z.coerce.number().int().min(0, "Reorder level must be positive"),
-  notes: z.string().optional(),
+  name: z.string().min(2, "Name must be at least 2 characters").max(255, "Name too long"),
+  generic_name: z.string().max(255, "Generic name too long").optional(),
+  manufacturer: z.string().max(255, "Manufacturer name too long").optional(),
+  category: z.string().max(100, "Category name too long").optional(),
+  unit: z.string().min(1, "Unit is required").max(50, "Unit name too long"),
+  packaging: z.string().max(100, "Packaging description too long").optional(),
+  units_per_package: z.coerce.number().int().min(1, "Units per package must be at least 1").max(10000, "Units per package too large").default(1),
+  price_per_package: z.coerce.number().min(0, "Price must be positive").max(10000000, "Price too large"),
+  stock_quantity: z.coerce.number().int().min(0, "Quantity must be positive").max(1000000, "Quantity too large"),
+  reorder_level: z.coerce.number().int().min(0, "Reorder level must be positive").max(100000, "Reorder level too large"),
+  notes: z.string().max(2000, "Notes too long").optional(),
   active: z.boolean().default(true),
 });
 

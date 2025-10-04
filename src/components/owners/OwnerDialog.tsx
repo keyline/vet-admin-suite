@@ -23,11 +23,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
 const ownerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().min(1, "Phone number is required"),
-  address: z.string().optional(),
-  notes: z.string().optional(),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
+  email: z.string().email("Invalid email address").max(255, "Email too long").optional().or(z.literal("")),
+  phone: z.string().min(1, "Phone number is required").max(20, "Phone number too long"),
+  address: z.string().max(500, "Address too long").optional(),
+  notes: z.string().max(2000, "Notes too long").optional(),
   active: z.boolean().default(true),
 });
 

@@ -162,20 +162,15 @@ const PurchaseOrders = () => {
 
       if (itemsError) throw itemsError;
 
-      // Update stock for each medicine
+      // Update stock for each medicine using atomic increment function
       for (const item of items || []) {
-        const { data: medicine } = await supabase
-          .from("medicines")
-          .select("stock_quantity")
-          .eq("id", item.medicine_id)
-          .single();
+        const { error: stockError } = await supabase
+          .rpc('increment_medicine_stock', {
+            medicine_id: item.medicine_id,
+            quantity_to_add: item.quantity
+          });
 
-        if (medicine) {
-          await supabase
-            .from("medicines")
-            .update({ stock_quantity: medicine.stock_quantity + item.quantity })
-            .eq("id", item.medicine_id);
-        }
+        if (stockError) throw stockError;
       }
 
       // Update PO status

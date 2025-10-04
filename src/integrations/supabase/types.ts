@@ -1156,6 +1156,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_medicine_stock: {
+        Args: { medicine_id: string; quantity_to_add: number }
+        Returns: undefined
+      }
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean

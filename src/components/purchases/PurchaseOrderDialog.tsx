@@ -34,17 +34,17 @@ import { Trash2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const poSchema = z.object({
-  vendor_name: z.string().min(2, "Vendor name is required"),
-  vendor_contact: z.string().optional(),
+  vendor_name: z.string().min(2, "Vendor name is required").max(255, "Vendor name too long"),
+  vendor_contact: z.string().max(255, "Contact too long").optional(),
   order_date: z.string().min(1, "Order date is required"),
   expected_delivery: z.string().optional(),
-  notes: z.string().optional(),
+  notes: z.string().max(2000, "Notes too long").optional(),
   status: z.enum(["draft", "submitted", "approved", "received", "cancelled"]).default("draft"),
   po_items: z.array(
     z.object({
       medicine_id: z.string().min(1, "Medicine is required"),
-      quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
-      unit_price: z.coerce.number().min(0, "Price must be positive"),
+      quantity: z.coerce.number().int().min(1, "Quantity must be at least 1").max(1000000, "Quantity too large"),
+      unit_price: z.coerce.number().min(0, "Price must be positive").max(10000000, "Price too large"),
       total_price: z.coerce.number().min(0),
     })
   ).min(1, "At least one item is required"),
