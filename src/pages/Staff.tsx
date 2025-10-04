@@ -273,7 +273,18 @@ const Staff = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, isRoleOnly }: { id: string; isRoleOnly?: boolean }) => {
+      // If this is a role-only user, delete their role instead
+      if (isRoleOnly) {
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", id);
+        if (error) throw error;
+        return;
+      }
+      
+      // Otherwise, delete the staff record
       const { error } = await supabase.from("staff").delete().eq("id", id);
       if (error) throw error;
     },
@@ -656,7 +667,10 @@ const Staff = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => staffToDelete && deleteMutation.mutate(staffToDelete.id)}
+              onClick={() => staffToDelete && deleteMutation.mutate({ 
+                id: staffToDelete.id, 
+                isRoleOnly: staffToDelete.isRoleOnly 
+              })}
             >
               Delete
             </AlertDialogAction>
