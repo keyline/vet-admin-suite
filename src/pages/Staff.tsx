@@ -45,7 +45,8 @@ const Staff = () => {
   const { data: staff, isLoading } = useQuery({
     queryKey: ["staff"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch staff members
+      const { data: staffData, error: staffError } = await supabase
         .from("staff")
         .select(`
           *,
@@ -55,8 +56,64 @@ const Staff = () => {
           )
         `)
         .order("name");
-      if (error) throw error;
-      return data;
+      if (staffError) throw staffError;
+
+      // Fetch all users with roles
+      const { data: usersWithRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+      if (rolesError) throw rolesError;
+
+      // Fetch profiles for users with roles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone");
+      if (profilesError) throw profilesError;
+
+      // Create a map of user_ids from staff table
+      const staffUserIds = new Set(staffData?.map(s => s.user_id).filter(Boolean));
+
+      // Create a map of roles by user_id
+      const rolesByUserId = new Map(usersWithRoles?.map(ur => [ur.user_id, ur.role]) || []);
+
+      // Create a map of profiles by id
+      const profilesById = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      // Add users with roles who are not in staff table
+      const additionalUsers = usersWithRoles
+        ?.filter(ur => ur.user_id && !staffUserIds.has(ur.user_id))
+        .map(ur => {
+          const profile = profilesById.get(ur.user_id);
+          return {
+            id: ur.user_id,
+            user_id: ur.user_id,
+            name: profile?.full_name || 'Unknown',
+            email: profile?.email || null,
+            phone: profile?.phone || null,
+            specialization: null,
+            license_number: null,
+            staff_type_id: null,
+            staff_types: null,
+            active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            role: ur.role,
+            isRoleOnly: true,
+          };
+        }) || [];
+
+      // Add role info to existing staff members
+      const staffWithRoles = staffData?.map(s => ({
+        ...s,
+        role: s.user_id ? rolesByUserId.get(s.user_id) : null,
+      })) || [];
+
+      // Combine staff and role-only users
+      const combined = [...staffWithRoles, ...additionalUsers].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      );
+
+      return combined;
     },
   });
 
@@ -322,7 +379,7 @@ const Staff = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Staff Type / Role</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Specialization</TableHead>
@@ -336,7 +393,7 @@ const Staff = () => {
                             <TableRow key={member.id}>
                               <TableCell className="font-medium">{member.name}</TableCell>
                               <TableCell>
-                                {member.staff_types?.name || "-"}
+                                {member.staff_types?.name || (member.role ? <Badge variant="outline">{member.role}</Badge> : "-")}
                               </TableCell>
                               <TableCell>{member.email || "-"}</TableCell>
                               <TableCell>{member.phone || "-"}</TableCell>
@@ -392,7 +449,7 @@ const Staff = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Staff Type / Role</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Specialization</TableHead>
@@ -406,7 +463,7 @@ const Staff = () => {
                             <TableRow key={member.id}>
                               <TableCell className="font-medium">{member.name}</TableCell>
                               <TableCell>
-                                {member.staff_types?.name || "-"}
+                                {member.staff_types?.name || (member.role ? <Badge variant="outline">{member.role}</Badge> : "-")}
                               </TableCell>
                               <TableCell>{member.email || "-"}</TableCell>
                               <TableCell>{member.phone || "-"}</TableCell>
@@ -462,7 +519,7 @@ const Staff = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Staff Type / Role</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Specialization</TableHead>
@@ -476,7 +533,7 @@ const Staff = () => {
                             <TableRow key={member.id}>
                               <TableCell className="font-medium">{member.name}</TableCell>
                               <TableCell>
-                                {member.staff_types?.name || "-"}
+                                {member.staff_types?.name || (member.role ? <Badge variant="outline">{member.role}</Badge> : "-")}
                               </TableCell>
                               <TableCell>{member.email || "-"}</TableCell>
                               <TableCell>{member.phone || "-"}</TableCell>
