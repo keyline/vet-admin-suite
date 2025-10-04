@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StaffDialog } from "@/components/masters/StaffDialog";
 import { CreateStaffPasswordDialog } from "@/components/staff/CreateStaffPasswordDialog";
 import {
@@ -37,6 +38,7 @@ const Staff = () => {
   const [staffToDelete, setStaffToDelete] = useState<any>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [staffForAuth, setStaffForAuth] = useState<{ id: string; email: string; name: string } | null>(null);
+  const [activeTab, setActiveTab] = useState("active");
   const queryClient = useQueryClient();
   const { canAdd, canEdit, canDelete, isAdmin } = usePermissions();
 
@@ -285,85 +287,245 @@ const Staff = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Staff</CardTitle>
-            <CardDescription>View and manage hospital staff</CardDescription>
+            <CardTitle>Staff Management</CardTitle>
+            <CardDescription>View and manage hospital staff by status</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ) : !staff || staff.length === 0 ? (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                No staff members found. Click "Add Staff" to get started.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Staff Type</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Specialization</TableHead>
-                    <TableHead>License</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {staff.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>
-                        {member.staff_types?.name || "-"}
-                      </TableCell>
-                      <TableCell>{member.email || "-"}</TableCell>
-                      <TableCell>{member.phone || "-"}</TableCell>
-                      <TableCell>{member.specialization || "-"}</TableCell>
-                      <TableCell>{member.license_number || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={member.active ? "default" : "secondary"}>
-                          {member.active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {isAdmin && !member.user_id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleCreateAuth(member.id, member.email, member.name)}
-                            title="Create login account"
-                          >
-                            <Key className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canEdit('staff') && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(member)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete('staff') && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(member)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="active">
+                  Active ({staff?.filter(s => s.active).length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="inactive">
+                  Inactive ({staff?.filter(s => !s.active).length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="all">
+                  All ({staff?.length || 0})
+                </TabsTrigger>
+              </TabsList>
+
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="active">
+                    {!staff || staff.filter(s => s.active).length === 0 ? (
+                      <div className="flex items-center justify-center py-12 text-muted-foreground">
+                        No active staff members found.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Specialization</TableHead>
+                            <TableHead>License</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {staff.filter(s => s.active).map((member) => (
+                            <TableRow key={member.id}>
+                              <TableCell className="font-medium">{member.name}</TableCell>
+                              <TableCell>
+                                {member.staff_types?.name || "-"}
+                              </TableCell>
+                              <TableCell>{member.email || "-"}</TableCell>
+                              <TableCell>{member.phone || "-"}</TableCell>
+                              <TableCell>{member.specialization || "-"}</TableCell>
+                              <TableCell>{member.license_number || "-"}</TableCell>
+                              <TableCell>
+                                <Badge variant="default">Active</Badge>
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                {isAdmin && !member.user_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleCreateAuth(member.id, member.email, member.name)}
+                                    title="Create login account"
+                                  >
+                                    <Key className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canEdit('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(member)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canDelete('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDelete(member)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="inactive">
+                    {!staff || staff.filter(s => !s.active).length === 0 ? (
+                      <div className="flex items-center justify-center py-12 text-muted-foreground">
+                        No inactive staff members found.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Specialization</TableHead>
+                            <TableHead>License</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {staff.filter(s => !s.active).map((member) => (
+                            <TableRow key={member.id}>
+                              <TableCell className="font-medium">{member.name}</TableCell>
+                              <TableCell>
+                                {member.staff_types?.name || "-"}
+                              </TableCell>
+                              <TableCell>{member.email || "-"}</TableCell>
+                              <TableCell>{member.phone || "-"}</TableCell>
+                              <TableCell>{member.specialization || "-"}</TableCell>
+                              <TableCell>{member.license_number || "-"}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">Inactive</Badge>
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                {isAdmin && !member.user_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleCreateAuth(member.id, member.email, member.name)}
+                                    title="Create login account"
+                                  >
+                                    <Key className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canEdit('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(member)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canDelete('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDelete(member)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="all">
+                    {!staff || staff.length === 0 ? (
+                      <div className="flex items-center justify-center py-12 text-muted-foreground">
+                        No staff members found. Click "Add Staff" to get started.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Staff Type</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Specialization</TableHead>
+                            <TableHead>License</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {staff.map((member) => (
+                            <TableRow key={member.id}>
+                              <TableCell className="font-medium">{member.name}</TableCell>
+                              <TableCell>
+                                {member.staff_types?.name || "-"}
+                              </TableCell>
+                              <TableCell>{member.email || "-"}</TableCell>
+                              <TableCell>{member.phone || "-"}</TableCell>
+                              <TableCell>{member.specialization || "-"}</TableCell>
+                              <TableCell>{member.license_number || "-"}</TableCell>
+                              <TableCell>
+                                <Badge variant={member.active ? "default" : "secondary"}>
+                                  {member.active ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right space-x-2">
+                                {isAdmin && !member.user_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleCreateAuth(member.id, member.email, member.name)}
+                                    title="Create login account"
+                                  >
+                                    <Key className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canEdit('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(member)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canDelete('staff') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDelete(member)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
           </CardContent>
         </Card>
       </div>
