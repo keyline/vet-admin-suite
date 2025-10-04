@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { StaffDialog } from "@/components/masters/StaffDialog";
+import { CreateStaffPasswordDialog } from "@/components/staff/CreateStaffPasswordDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,8 @@ const Staff = () => {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<any>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [staffForAuth, setStaffForAuth] = useState<{ id: string; email: string; name: string } | null>(null);
   const queryClient = useQueryClient();
   const { canAdd, canEdit, canDelete, isAdmin } = usePermissions();
 
@@ -208,10 +211,7 @@ const Staff = () => {
   };
 
   const createAuthMutation = useMutation({
-    mutationFn: async ({ staffId, email, name }: { staffId: string; email: string; name: string }) => {
-      const password = prompt(`Enter password for ${email}:`);
-      if (!password) throw new Error("Password is required");
-
+    mutationFn: async ({ staffId, email, name, password }: { staffId: string; email: string; name: string; password: string }) => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-auth`, {
         method: 'POST',
         headers: {
@@ -232,6 +232,8 @@ const Staff = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
+      setPasswordDialogOpen(false);
+      setStaffForAuth(null);
       toast({ title: "Login account created successfully" });
     },
     onError: (error: any) => {
@@ -242,6 +244,22 @@ const Staff = () => {
       });
     },
   });
+
+  const handleCreateAuth = (staffId: string, email: string, name: string) => {
+    setStaffForAuth({ id: staffId, email, name });
+    setPasswordDialogOpen(true);
+  };
+
+  const handlePasswordSubmit = (password: string) => {
+    if (staffForAuth) {
+      createAuthMutation.mutate({
+        staffId: staffForAuth.id,
+        email: staffForAuth.email,
+        name: staffForAuth.name,
+        password,
+      });
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -316,11 +334,7 @@ const Staff = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => createAuthMutation.mutate({ 
-                              staffId: member.id, 
-                              email: member.email, 
-                              name: member.name 
-                            })}
+                            onClick={() => handleCreateAuth(member.id, member.email, member.name)}
                             title="Create login account"
                           >
                             <Key className="h-4 w-4" />
@@ -385,6 +399,13 @@ const Staff = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateStaffPasswordDialog
+        open={passwordDialogOpen}
+        onOpenChange={setPasswordDialogOpen}
+        onSubmit={handlePasswordSubmit}
+        email={staffForAuth?.email || ""}
+      />
     </DashboardLayout>
   );
 };

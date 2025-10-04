@@ -37,9 +37,10 @@ const StaffLogin = () => {
       toast({ title: "Login successful" });
       navigate("/");
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: "Invalid email or password",
         variant: "destructive",
       });
     } finally {

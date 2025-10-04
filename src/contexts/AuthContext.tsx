@@ -66,7 +66,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        toast.error("Invalid email or password");
+        return { error: { message: "Invalid email or password" } };
+      }
 
       // Ensure initial admin bootstrap if roles are empty
       try {
@@ -77,8 +81,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate("/dashboard");
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
-      return { error };
+      console.error('Sign in exception:', error);
+      toast.error("Authentication failed. Please try again.");
+      return { error: { message: "Authentication failed. Please try again." } };
     }
   };
 
@@ -97,7 +102,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign up error:', error);
+        if (error.message?.toLowerCase().includes('already registered') ||
+            error.message?.toLowerCase().includes('already exists')) {
+          toast.error("Unable to complete registration. Please contact support.");
+          return { error: { message: "Unable to complete registration. Please contact support." } };
+        }
+        toast.error("Registration failed. Please try again.");
+        return { error: { message: "Registration failed. Please try again." } };
+      }
 
       try {
         await supabase.rpc("ensure_first_superadmin");
@@ -107,8 +121,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate("/dashboard");
       return { error: null };
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign up");
-      return { error };
+      console.error('Sign up exception:', error);
+      toast.error("Registration failed. Please try again.");
+      return { error: { message: "Registration failed. Please try again." } };
     }
   };
 
