@@ -23,6 +23,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { MedicineScheduler, MedicineScheduleEntry } from "@/components/admissions/MedicineScheduler";
 
 const admissionFormSchema = z.object({
   // Owner information
@@ -51,10 +52,7 @@ const admissionFormSchema = z.object({
   // Medical information
   xrayDate: z.date().optional(),
   operationDate: z.date().optional(),
-  antibioticDay1: z.string().optional(),
-  antibioticDay2: z.string().optional(),
-  antibioticDay3: z.string().optional(),
-  antibioticDay5: z.string().optional(),
+  medicineSchedule: z.array(z.any()).default([]),
   bloodTestReport: z.string().optional(),
   
   // Payment
@@ -82,6 +80,7 @@ const Admissions = () => {
       gender: "male",
       paymentReceived: 0,
       unknownOwner: false,
+      medicineSchedule: [],
     },
   });
 
@@ -150,6 +149,27 @@ const Admissions = () => {
       // Set the display tag number for read-only field
       setDisplayTagNumber(petData.microchip_id || "Auto-generated");
 
+      // Convert old format to new format if needed
+      let medicineSchedule: MedicineScheduleEntry[] = [];
+      if (Array.isArray(antibiotics)) {
+        medicineSchedule = antibiotics;
+      } else if (antibiotics && typeof antibiotics === 'object') {
+        // Convert old day1, day2 format to new array format
+        Object.entries(antibiotics).forEach(([key, value]) => {
+          const dayMatch = key.match(/day(\d+)/);
+          if (dayMatch && value) {
+            medicineSchedule.push({
+              id: crypto.randomUUID(),
+              day: parseInt(dayMatch[1]),
+              medicine_id: "",
+              medicine_name: value as string,
+              dose: "",
+              time: "09:00",
+            });
+          }
+        });
+      }
+
       form.reset({
         // Owner information
         unknownOwner: owner?.name === "Unknown Owner",
@@ -176,10 +196,7 @@ const Admissions = () => {
         // Medical information
         xrayDate: admission.xray_date ? new Date(admission.xray_date) : undefined,
         operationDate: admission.operation_date ? new Date(admission.operation_date) : undefined,
-        antibioticDay1: antibiotics?.day1 || "",
-        antibioticDay2: antibiotics?.day2 || "",
-        antibioticDay3: antibiotics?.day3 || "",
-        antibioticDay5: antibiotics?.day5 || "",
+        medicineSchedule: medicineSchedule,
         bloodTestReport: admission.blood_test_report || "",
         
         // Payment
@@ -478,12 +495,7 @@ const Admissions = () => {
       }
 
       // 3. Prepare antibiotics schedule
-      const antibioticsSchedule = {
-        day1: values.antibioticDay1 || null,
-        day2: values.antibioticDay2 || null,
-        day3: values.antibioticDay3 || null,
-        day5: values.antibioticDay5 || null,
-      };
+      const antibioticsSchedule = values.medicineSchedule || [];
 
       // 4. Create or update admission
       if (isEditMode && petData.admissions && petData.admissions[0]) {
@@ -1151,57 +1163,19 @@ const Admissions = () => {
                 </div>
 
                 <div>
-                  <Label className="text-base font-semibold mb-3 block">Antibiotic Given</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="antibioticDay1"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day 1</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Medicine" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="antibioticDay2"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day 2</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Medicine" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="antibioticDay3"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day 3</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Medicine" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="antibioticDay5"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day 5</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Medicine" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <Label className="text-base font-semibold mb-3 block">Medicine Schedule</Label>
+                  <FormField
+                    control={form.control}
+                    name="medicineSchedule"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <MedicineScheduler value={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <FormField
