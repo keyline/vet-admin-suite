@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Key } from "lucide-react";
+import { Plus, Pencil, Ban, Key, RefreshCw } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   Table,
@@ -34,8 +34,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Staff = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [staffToDelete, setStaffToDelete] = useState<any>(null);
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [staffToDeactivate, setStaffToDeactivate] = useState<any>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [staffForAuth, setStaffForAuth] = useState<{ id: string; email: string; name: string } | null>(null);
   const [activeTab, setActiveTab] = useState("active");
@@ -272,31 +272,68 @@ const Staff = () => {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async ({ id, isRoleOnly }: { id: string; isRoleOnly?: boolean }) => {
-      // If this is a role-only user, delete their role instead
+  const deactivateMutation = useMutation({
+    mutationFn: async ({ id, isRoleOnly, name, email, phone, staff_type_id }: { 
+      id: string; 
+      isRoleOnly?: boolean;
+      name?: string;
+      email?: string;
+      phone?: string;
+      staff_type_id?: string;
+    }) => {
+      // If this is a role-only user, create a staff record with active=false
       if (isRoleOnly) {
         const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", id);
+          .from("staff")
+          .insert([{ 
+            user_id: id, 
+            name: name || 'Unknown',
+            email: email,
+            phone: phone,
+            staff_type_id: staff_type_id,
+            active: false 
+          }]);
         if (error) throw error;
         return;
       }
       
-      // Otherwise, delete the staff record
-      const { error } = await supabase.from("staff").delete().eq("id", id);
+      // Otherwise, set active=false on the staff record
+      const { error } = await supabase
+        .from("staff")
+        .update({ active: false })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
-      toast({ title: "Staff member deleted successfully" });
-      setDeleteDialogOpen(false);
-      setStaffToDelete(null);
+      toast({ title: "Staff member deactivated successfully" });
+      setDeactivateDialogOpen(false);
+      setStaffToDeactivate(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error deleting staff member",
+        title: "Error deactivating staff member",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("staff")
+        .update({ active: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      toast({ title: "Staff member reactivated successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error reactivating staff member",
         description: error.message,
         variant: "destructive",
       });
@@ -320,9 +357,13 @@ const Staff = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (staff: any) => {
-    setStaffToDelete(staff);
-    setDeleteDialogOpen(true);
+  const handleDeactivate = (staff: any) => {
+    setStaffToDeactivate(staff);
+    setDeactivateDialogOpen(true);
+  };
+
+  const handleReactivate = (staff: any) => {
+    reactivateMutation.mutate(staff.id);
   };
 
   const createAuthMutation = useMutation({
@@ -482,9 +523,10 @@ const Staff = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleDelete(member)}
+                                    onClick={() => handleDeactivate(member)}
+                                    title="Deactivate staff member"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Ban className="h-4 w-4" />
                                   </Button>
                                 )}
                               </TableCell>
@@ -552,9 +594,10 @@ const Staff = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleDelete(member)}
+                                    onClick={() => handleReactivate(member)}
+                                    title="Reactivate staff member"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <RefreshCw className="h-4 w-4" />
                                   </Button>
                                 )}
                               </TableCell>
@@ -620,13 +663,24 @@ const Staff = () => {
                                     <Pencil className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {canDelete('staff') && (
+                                {canDelete('staff') && member.active && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleDelete(member)}
+                                    onClick={() => handleDeactivate(member)}
+                                    title="Deactivate staff member"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canDelete('staff') && !member.active && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleReactivate(member)}
+                                    title="Reactivate staff member"
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
                                   </Button>
                                 )}
                               </TableCell>
@@ -656,23 +710,27 @@ const Staff = () => {
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Deactivate Staff Member?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the staff member.
+              This will mark the staff member as inactive. They will be moved to the Inactive tab but their data will be preserved. You can reactivate them later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => staffToDelete && deleteMutation.mutate({ 
-                id: staffToDelete.id, 
-                isRoleOnly: staffToDelete.isRoleOnly 
+              onClick={() => staffToDeactivate && deactivateMutation.mutate({ 
+                id: staffToDeactivate.id, 
+                isRoleOnly: staffToDeactivate.isRoleOnly,
+                name: staffToDeactivate.name,
+                email: staffToDeactivate.email,
+                phone: staffToDeactivate.phone,
+                staff_type_id: staffToDeactivate.staff_type_id
               })}
             >
-              Delete
+              Deactivate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
