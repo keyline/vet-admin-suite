@@ -10,6 +10,7 @@ import StaffLogin from "./pages/StaffLogin";
 import Dashboard from "./pages/Dashboard";
 import Owners from "./pages/Owners";
 import Pets from "./pages/Pets";
+import TreatmentHistory from "./pages/TreatmentHistory";
 import Admissions from "./pages/Admissions";
 import Donations from "./pages/Donations";
 import Buildings from "./pages/Buildings";
@@ -60,6 +61,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Pets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/treatment-history/:petId"
+              element={
+                <ProtectedRoute>
+                  <TreatmentHistory />
                 </ProtectedRoute>
               }
             />

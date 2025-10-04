@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, DoorOpen, Home } from "lucide-react";
+import { Plus, Edit, DoorOpen, Home, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -157,6 +157,14 @@ const Pets = () => {
                         {canEdit('pets') && (
                           <TableCell>
                             <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/treatment-history/${pet.id}`)}
+                                title="View Treatment History"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
                               {!cage ? (
                                 <Button
                                   variant="ghost"
