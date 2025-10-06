@@ -70,6 +70,32 @@ const Dashboard = () => {
     },
   });
 
+  // Fetch donations for current month
+  const { data: monthlyDonations, isLoading: isDonationsLoading } = useQuery({
+    queryKey: ["dashboard-donations"],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const endOfMonth = new Date();
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      endOfMonth.setDate(0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      const { data, error } = await supabase
+        .from("donations")
+        .select("total_value")
+        .gte("donation_date", startOfMonth.toISOString().split('T')[0])
+        .lte("donation_date", endOfMonth.toISOString().split('T')[0]);
+      
+      if (error) throw error;
+      
+      const total = data?.reduce((sum, donation) => sum + (Number(donation.total_value) || 0), 0) || 0;
+      return total;
+    },
+  });
+
   const stats = [
     {
       title: "Admitted Pets",
@@ -94,7 +120,7 @@ const Dashboard = () => {
     },
     {
       title: "Donation",
-      value: "₹0",
+      value: isDonationsLoading ? <Skeleton className="h-8 w-24" /> : `₹${monthlyDonations?.toLocaleString('en-IN') || '0'}`,
       description: "This month",
       icon: DollarSign,
       color: "text-success",
