@@ -311,13 +311,31 @@ const TreatmentHistory = () => {
                       {admission.antibiotics_schedule && (
                         <div className="space-y-3 pt-4 border-t">
                           <h4 className="text-lg font-semibold">Medicine Schedule</h4>
-                          <div className="rounded-md border bg-muted/30 p-4">
-                            {typeof admission.antibiotics_schedule === 'object' ? (
-                              <pre className="text-xs font-mono overflow-auto whitespace-pre-wrap break-words">
-                                {JSON.stringify(admission.antibiotics_schedule, null, 2)}
-                              </pre>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {typeof admission.antibiotics_schedule === 'object' && 
+                             Array.isArray(admission.antibiotics_schedule) ? (
+                              admission.antibiotics_schedule.map((schedule: any, index: number) => (
+                                <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
+                                  <div className="font-semibold text-sm border-b pb-2">
+                                    {schedule.date ? format(new Date(schedule.date), "dd MMM yyyy") : `Day ${index + 1}`}
+                                  </div>
+                                  <div className="space-y-2">
+                                    {schedule.medicines?.map((med: any, medIndex: number) => (
+                                      <div key={medIndex} className="text-xs space-y-1">
+                                        <div className="font-medium">{med.name || med.medicine}</div>
+                                        <div className="text-muted-foreground">
+                                          {med.dosage && <div>Dose: {med.dosage}</div>}
+                                          {med.time && <div>Time: {med.time}</div>}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
                             ) : (
-                              <p className="text-sm">{admission.antibiotics_schedule}</p>
+                              <div className="col-span-full rounded-md border bg-muted/30 p-4">
+                                <p className="text-sm">{String(admission.antibiotics_schedule)}</p>
+                              </div>
                             )}
                           </div>
                         </div>
