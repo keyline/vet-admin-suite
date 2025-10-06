@@ -312,31 +312,76 @@ const TreatmentHistory = () => {
                         <div className="space-y-3 pt-4 border-t">
                           <h4 className="text-lg font-semibold">Medicine Schedule</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {typeof admission.antibiotics_schedule === 'object' && 
-                             Array.isArray(admission.antibiotics_schedule) ? (
-                              admission.antibiotics_schedule.map((schedule: any, index: number) => (
-                                <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
-                                  <div className="font-semibold text-sm border-b pb-2">
-                                    {schedule.date ? format(new Date(schedule.date), "dd MMM yyyy") : `Day ${index + 1}`}
+                            {(() => {
+                              const schedule = admission.antibiotics_schedule;
+                              
+                              // Handle array format
+                              if (Array.isArray(schedule)) {
+                                return schedule.map((daySchedule: any, index: number) => (
+                                  <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
+                                    <div className="font-semibold text-sm border-b pb-2">
+                                      Day {index + 1}
+                                    </div>
+                                    <div className="space-y-2">
+                                      {(daySchedule.medicines || daySchedule.items || [daySchedule]).map((med: any, medIndex: number) => (
+                                        <div key={medIndex} className="text-xs space-y-1">
+                                          <div className="font-medium">{med.medicine || med.name || "Medicine"}</div>
+                                          <div className="text-muted-foreground space-y-0.5">
+                                            {med.dosage && <div>Dose: {med.dosage}</div>}
+                                            {med.dose && <div>Dose: {med.dose}</div>}
+                                            {med.frequency && <div>Frequency: {med.frequency}</div>}
+                                            {med.time && <div>Time: {med.time}</div>}
+                                            {med.times && <div>Times: {Array.isArray(med.times) ? med.times.join(", ") : med.times}</div>}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div className="space-y-2">
-                                    {schedule.medicines?.map((med: any, medIndex: number) => (
-                                      <div key={medIndex} className="text-xs space-y-1">
-                                        <div className="font-medium">{med.name || med.medicine}</div>
-                                        <div className="text-muted-foreground">
-                                          {med.dosage && <div>Dose: {med.dosage}</div>}
-                                          {med.time && <div>Time: {med.time}</div>}
+                                ));
+                              }
+                              
+                              // Handle object format (day1, day2, etc.)
+                              if (typeof schedule === 'object') {
+                                const days = Object.keys(schedule).sort();
+                                if (days.length > 0) {
+                                  return days.map((day, index) => {
+                                    const dayData = schedule[day];
+                                    const medicines = Array.isArray(dayData) ? dayData : [dayData];
+                                    
+                                    return (
+                                      <div key={day} className="rounded-lg border bg-card p-4 space-y-3">
+                                        <div className="font-semibold text-sm border-b pb-2 capitalize">
+                                          {day.replace(/([A-Z])/g, ' $1').trim()}
+                                        </div>
+                                        <div className="space-y-2">
+                                          {medicines.map((med: any, medIndex: number) => (
+                                            <div key={medIndex} className="text-xs space-y-1">
+                                              <div className="font-medium">{med.medicine || med.name || "Medicine"}</div>
+                                              <div className="text-muted-foreground space-y-0.5">
+                                                {med.dosage && <div>Dose: {med.dosage}</div>}
+                                                {med.dose && <div>Dose: {med.dose}</div>}
+                                                {med.frequency && <div>Frequency: {med.frequency}</div>}
+                                                {med.time && <div>Time: {med.time}</div>}
+                                                {med.times && <div>Times: {Array.isArray(med.times) ? med.times.join(", ") : med.times}</div>}
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                    );
+                                  });
+                                }
+                              }
+                              
+                              // Fallback for other formats
+                              return (
+                                <div className="col-span-full rounded-md border bg-muted/30 p-4">
+                                  <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                                    {JSON.stringify(schedule, null, 2)}
+                                  </pre>
                                 </div>
-                              ))
-                            ) : (
-                              <div className="col-span-full rounded-md border bg-muted/30 p-4">
-                                <p className="text-sm">{String(admission.antibiotics_schedule)}</p>
-                              </div>
-                            )}
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
