@@ -346,41 +346,30 @@ const TreatmentHistory = () => {
                                 return acc;
                               }, {});
 
-                              const admissionDate = new Date(admission.admission_date);
-
-                              return Object.keys(medicinesByDay).sort((a, b) => Number(a) - Number(b)).map((day) => {
-                                // Calculate the date for this day
-                                const scheduleDate = new Date(admissionDate);
-                                scheduleDate.setDate(admissionDate.getDate() + (Number(day) - 1));
-                                
-                                return (
-                                  <div key={day} className="rounded-lg border bg-card p-4 space-y-3">
-                                    <div className="font-semibold text-sm border-b pb-2">
-                                      <div>{format(scheduleDate, "EEEE")}</div>
-                                      <div className="text-xs text-muted-foreground font-normal">
-                                        {format(scheduleDate, "dd MMM yyyy")}
-                                      </div>
-                                    </div>
-                                    <div className="space-y-2.5">
-                                      {medicinesByDay[day].map((med: any) => (
-                                        <div key={med.id} className="text-xs space-y-1">
-                                          <div className="font-medium text-foreground">{med.medicine_name}</div>
-                                          <div className="text-muted-foreground space-y-0.5">
-                                            <div>
-                                              <span className="font-medium">Dose:</span> {med.dose} {med.unit}
-                                            </div>
-                                            {med.time && (
-                                              <div>
-                                                <span className="font-medium">Time:</span> {med.time}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
+                              return Object.keys(medicinesByDay).sort((a, b) => Number(a) - Number(b)).map((day) => (
+                                <div key={day} className="rounded-lg border bg-card p-4 space-y-3">
+                                  <div className="font-semibold text-sm border-b pb-2">
+                                    Day {day}
                                   </div>
-                                );
-                              });
+                                  <div className="space-y-2.5">
+                                    {medicinesByDay[day].map((med: any) => (
+                                      <div key={med.id} className="text-xs space-y-1">
+                                        <div className="font-medium text-foreground">{med.medicine_name}</div>
+                                        <div className="text-muted-foreground space-y-0.5">
+                                          <div>
+                                            <span className="font-medium">Dose:</span> {med.dose} {med.unit}
+                                          </div>
+                                          {med.time && (
+                                            <div>
+                                              <span className="font-medium">Time:</span> {med.time}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ));
                             })()}
                           </div>
                         </div>
