@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, PawPrint } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { OwnerDialog } from "@/components/owners/OwnerDialog";
+import { OwnerPetsModal } from "@/components/owners/OwnerPetsModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,8 @@ const Owners = () => {
   const [selectedOwnerForDonations, setSelectedOwnerForDonations] = useState<any>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [receiptPdfUrl, setReceiptPdfUrl] = useState<string | null>(null);
+  const [petsDialogOpen, setPetsDialogOpen] = useState(false);
+  const [selectedOwnerForPets, setSelectedOwnerForPets] = useState<any>(null);
   const queryClient = useQueryClient();
   const { canAdd, canEdit, canDelete } = usePermissions();
 
@@ -89,6 +92,11 @@ const Owners = () => {
   const handleDonationClick = (owner: any) => {
     setSelectedOwnerForDonations(owner);
     setDonationsDialogOpen(true);
+  };
+
+  const handlePetsClick = (owner: any) => {
+    setSelectedOwnerForPets(owner);
+    setPetsDialogOpen(true);
   };
 
   const generateDonationReceipt = (donation: any, owner: any) => {
@@ -265,6 +273,7 @@ const Owners = () => {
                     <TableHead>Address</TableHead>
                     <TableHead>Total Donations</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Pets</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -294,6 +303,16 @@ const Owners = () => {
                           <Badge variant={owner.active ? "default" : "secondary"}>
                             {owner.active ? "Active" : "Inactive"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handlePetsClick(owner)}
+                            title="View admitted pets"
+                          >
+                            <PawPrint className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
                           {canEdit('pet_owners') && (
@@ -447,6 +466,12 @@ const Owners = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <OwnerPetsModal
+        open={petsDialogOpen}
+        onOpenChange={setPetsDialogOpen}
+        owner={selectedOwnerForPets}
+      />
     </DashboardLayout>
   );
 };
