@@ -175,126 +175,133 @@ const TreatmentHistory = () => {
 
             {/* Treatment History */}
             {!treatmentHistory || treatmentHistory.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <FileText className="h-12 w-12 mb-4 opacity-50" />
-                  <p>No treatment history found for this pet.</p>
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <FileText className="h-16 w-16 mb-4 opacity-30" />
+                  <p className="text-lg">No treatment history found for this pet.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-6">
                 {treatmentHistory.map((admission) => (
-                  <Card key={admission.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            Admission: {admission.admission_number}
-                            <Badge variant={admission.status === "discharged" ? "secondary" : "default"}>
+                  <Card key={admission.id} className="overflow-hidden">
+                    <CardHeader className="bg-muted/30 pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="flex items-center gap-3 text-xl">
+                            {admission.admission_number}
+                            <Badge 
+                              variant={admission.status === "discharged" ? "secondary" : "default"}
+                              className="capitalize"
+                            >
                               {admission.status}
                             </Badge>
                           </CardTitle>
-                          <CardDescription>
-                            Admitted: {format(new Date(admission.admission_date), "dd MMM yyyy")}
+                          <CardDescription className="text-base">
+                            <span className="font-medium">Admitted:</span> {format(new Date(admission.admission_date), "dd MMM yyyy")}
                             {admission.discharge_date && 
-                              ` | Discharged: ${format(new Date(admission.discharge_date), "dd MMM yyyy")}`
+                              <> • <span className="font-medium">Discharged:</span> {format(new Date(admission.discharge_date), "dd MMM yyyy")}</>
                             }
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6 pt-6">
                       {/* Admission Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Reason</p>
-                          <p className="font-medium">{admission.reason}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reason</p>
+                          <p className="text-sm font-medium">{admission.reason}</p>
                         </div>
                         {admission.diagnosis && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Diagnosis</p>
-                            <p className="font-medium">{admission.diagnosis}</p>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Diagnosis</p>
+                            <p className="text-sm font-medium">{admission.diagnosis}</p>
                           </div>
                         )}
                         {admission.symptoms && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Symptoms</p>
-                            <p className="font-medium">{admission.symptoms}</p>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Symptoms</p>
+                            <p className="text-sm font-medium">{admission.symptoms}</p>
                           </div>
                         )}
-                        <div>
-                          <p className="text-sm text-muted-foreground">Doctor</p>
-                          <p className="font-medium">{admission.doctor_name || "-"}</p>
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Assigned Doctor</p>
+                          <p className="text-sm font-medium">{admission.doctor_name || "-"}</p>
                         </div>
                         {admission.cages && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Cage</p>
-                            <p className="font-medium">{admission.cages.cage_number} - {admission.cages.name}</p>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cage Assignment</p>
+                            <p className="text-sm font-medium">{admission.cages.cage_number} - {admission.cages.name}</p>
                           </div>
                         )}
                       </div>
 
                       {/* Doctor Visits */}
                       {admission.doctor_visits && admission.doctor_visits.length > 0 && (
-                        <div>
-                          <h4 className="font-semibold mb-3">Doctor Visits</h4>
+                        <div className="space-y-4 pt-4 border-t">
+                          <h4 className="text-lg font-semibold">Doctor Visits</h4>
                           <div className="space-y-4">
                             {admission.doctor_visits.map((visit: any) => (
-                              <div key={visit.id} className="border rounded-lg p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-medium">
-                                    {format(new Date(visit.visit_date), "dd MMM yyyy, hh:mm a")}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Dr. {visit.doctor_name || "Unknown"}
-                                  </p>
-                                </div>
-                                
-                                {visit.observations && (
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">Observations</p>
-                                    <p className="text-sm">{visit.observations}</p>
+                              <Card key={visit.id} className="border-l-4 border-l-primary">
+                                <CardContent className="pt-6 space-y-4">
+                                  <div className="flex items-center justify-between pb-3 border-b">
+                                    <p className="font-semibold">
+                                      {format(new Date(visit.visit_date), "dd MMM yyyy, hh:mm a")}
+                                    </p>
+                                    <Badge variant="outline">
+                                      Dr. {visit.doctor_name || "Unknown"}
+                                    </Badge>
                                   </div>
-                                )}
-                                
-                                {visit.diagnosis && (
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">Diagnosis</p>
-                                    <p className="text-sm">{visit.diagnosis}</p>
-                                  </div>
-                                )}
+                                  
+                                  {visit.observations && (
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Observations</p>
+                                      <p className="text-sm leading-relaxed">{visit.observations}</p>
+                                    </div>
+                                  )}
+                                  
+                                  {visit.diagnosis && (
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Diagnosis</p>
+                                      <p className="text-sm leading-relaxed">{visit.diagnosis}</p>
+                                    </div>
+                                  )}
 
-                                {/* Prescriptions */}
-                                {visit.prescriptions && visit.prescriptions.length > 0 && (
-                                  <div>
-                                    <p className="text-sm text-muted-foreground mb-2">Prescriptions</p>
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>Medicine</TableHead>
-                                          <TableHead>Dosage</TableHead>
-                                          <TableHead>Frequency</TableHead>
-                                          <TableHead>Duration</TableHead>
-                                          <TableHead>Quantity</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {visit.prescriptions.map((prescription: any) => (
-                                          <TableRow key={prescription.id}>
-                                            <TableCell>{prescription.medicines?.name || "-"}</TableCell>
-                                            <TableCell>{prescription.dosage}</TableCell>
-                                            <TableCell>{prescription.frequency}</TableCell>
-                                            <TableCell>{prescription.duration}</TableCell>
-                                            <TableCell>
-                                              {prescription.quantity} {prescription.medicines?.unit || ""}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                )}
-                              </div>
+                                  {/* Prescriptions */}
+                                  {visit.prescriptions && visit.prescriptions.length > 0 && (
+                                    <div className="space-y-3 pt-2">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Prescriptions</p>
+                                      <div className="rounded-md border overflow-hidden">
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow className="bg-muted/50">
+                                              <TableHead className="font-semibold">Medicine</TableHead>
+                                              <TableHead className="font-semibold">Dosage</TableHead>
+                                              <TableHead className="font-semibold">Frequency</TableHead>
+                                              <TableHead className="font-semibold">Duration</TableHead>
+                                              <TableHead className="font-semibold">Quantity</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {visit.prescriptions.map((prescription: any) => (
+                                              <TableRow key={prescription.id}>
+                                                <TableCell className="font-medium">{prescription.medicines?.name || "-"}</TableCell>
+                                                <TableCell>{prescription.dosage}</TableCell>
+                                                <TableCell>{prescription.frequency}</TableCell>
+                                                <TableCell>{prescription.duration}</TableCell>
+                                                <TableCell>
+                                                  {prescription.quantity} {prescription.medicines?.unit || ""}
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
                             ))}
                           </div>
                         </div>
@@ -302,15 +309,15 @@ const TreatmentHistory = () => {
 
                       {/* Medicine Schedule from Admission */}
                       {admission.antibiotics_schedule && (
-                        <div>
-                          <h4 className="font-semibold mb-3">Medicine Schedule</h4>
-                          <div className="text-sm">
+                        <div className="space-y-3 pt-4 border-t">
+                          <h4 className="text-lg font-semibold">Medicine Schedule</h4>
+                          <div className="rounded-md border bg-muted/30 p-4">
                             {typeof admission.antibiotics_schedule === 'object' ? (
-                              <pre className="bg-muted p-3 rounded-md overflow-auto">
+                              <pre className="text-xs font-mono overflow-auto whitespace-pre-wrap break-words">
                                 {JSON.stringify(admission.antibiotics_schedule, null, 2)}
                               </pre>
                             ) : (
-                              <p className="text-muted-foreground">{admission.antibiotics_schedule}</p>
+                              <p className="text-sm">{admission.antibiotics_schedule}</p>
                             )}
                           </div>
                         </div>
