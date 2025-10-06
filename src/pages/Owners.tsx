@@ -56,10 +56,27 @@ const Owners = () => {
   const { data: owners, isLoading } = useQuery({
     queryKey: ["pet_owners"],
     queryFn: async () => {
+      // Get owners who have pets with admissions
+      const { data: admissions, error: admissionsError } = await supabase
+        .from("admissions")
+        .select("pet_id, pets!inner(owner_id)");
+      
+      if (admissionsError) throw admissionsError;
+      
+      // Get unique owner IDs from pets with admissions
+      const ownerIds = [...new Set(admissions?.map(a => a.pets.owner_id) || [])];
+      
+      if (ownerIds.length === 0) {
+        return [];
+      }
+      
+      // Fetch owners who have admitted pets
       const { data, error } = await supabase
         .from("pet_owners")
         .select("*")
+        .in("id", ownerIds)
         .order("name");
+        
       if (error) throw error;
       return data;
     },
