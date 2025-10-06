@@ -266,23 +266,30 @@ const Admissions = () => {
     },
   });
 
-  // Fetch doctors only (staff with doctor type)
+  // Fetch doctors only (staff with doctor role)
   const { data: doctors } = useQuery({
     queryKey: ["doctors"],
     queryFn: async () => {
+      // First get all user_ids with doctor role
+      const { data: doctorRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "doctor");
+      
+      if (rolesError) throw rolesError;
+      
+      const doctorUserIds = doctorRoles?.map(r => r.user_id) || [];
+      
+      if (doctorUserIds.length === 0) return [];
+      
+      // Then get staff records for those user_ids
       const { data, error } = await supabase
         .from("staff")
-        .select(`
-          id,
-          name,
-          staff_types!inner (
-            name,
-            role_mapping
-          )
-        `)
+        .select("id, name, user_id")
         .eq("active", true)
-        .eq("staff_types.role_mapping", "doctor")
+        .in("user_id", doctorUserIds)
         .order("name");
+      
       if (error) throw error;
       
       // Get count of pets assigned to each doctor
