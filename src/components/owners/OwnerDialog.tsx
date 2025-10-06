@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,18 +52,39 @@ export function OwnerDialog({
   const form = useForm<OwnerFormValues>({
     resolver: zodResolver(ownerSchema),
     defaultValues: {
-      name: owner?.name || "",
-      email: owner?.email || "",
-      phone: owner?.phone || "",
-      address: owner?.address || "",
-      notes: owner?.notes || "",
-      active: owner?.active ?? true,
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      notes: "",
+      active: true,
     },
   });
 
+  useEffect(() => {
+    if (owner) {
+      form.reset({
+        name: owner.name || "",
+        email: owner.email || "",
+        phone: owner.phone || "",
+        address: owner.address || "",
+        notes: owner.notes || "",
+        active: owner.active ?? true,
+      });
+    } else {
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        notes: "",
+        active: true,
+      });
+    }
+  }, [owner, form]);
+
   const handleSubmit = (values: OwnerFormValues) => {
     onSubmit(values);
-    form.reset();
   };
 
   return (
