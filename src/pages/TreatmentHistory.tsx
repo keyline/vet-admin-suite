@@ -70,7 +70,7 @@ const TreatmentHistory = () => {
 
       if (error) throw error;
       
-      // Fetch doctor names separately
+      // Fetch doctor names and medicine units separately
       const admissionsWithDoctors = await Promise.all(
         (data || []).map(async (admission) => {
           let doctorName = "-";
@@ -79,7 +79,7 @@ const TreatmentHistory = () => {
               .from("profiles")
               .select("full_name")
               .eq("id", admission.doctor_id)
-              .single();
+              .maybeSingle();
             doctorName = profile?.full_name || "-";
           }
 
@@ -91,17 +91,42 @@ const TreatmentHistory = () => {
                   .from("profiles")
                   .select("full_name")
                   .eq("id", visit.doctor_id)
-                  .single();
+                  .maybeSingle();
                 visitDoctorName = profile?.full_name || "-";
               }
               return { ...visit, doctor_name: visitDoctorName };
             })
           );
 
+          // Fetch medicine units for antibiotics_schedule
+          let scheduleWithUnits = admission.antibiotics_schedule;
+          if (Array.isArray(admission.antibiotics_schedule) && admission.antibiotics_schedule.length > 0) {
+            const medicineIds = admission.antibiotics_schedule
+              .map((item: any) => item.medicine_id)
+              .filter(Boolean);
+            
+            if (medicineIds.length > 0) {
+              const { data: medicines } = await supabase
+                .from("medicines")
+                .select("id, unit")
+                .in("id", medicineIds);
+              
+              const medicineUnitsMap = new Map(
+                medicines?.map((m) => [m.id, m.unit]) || []
+              );
+              
+              scheduleWithUnits = admission.antibiotics_schedule.map((item: any) => ({
+                ...item,
+                unit: medicineUnitsMap.get(item.medicine_id) || ""
+              }));
+            }
+          }
+
           return { 
             ...admission, 
             doctor_name: doctorName,
-            doctor_visits: visitsWithDoctors 
+            doctor_visits: visitsWithDoctors,
+            antibiotics_schedule: scheduleWithUnits
           };
         })
       );
@@ -308,79 +333,43 @@ const TreatmentHistory = () => {
                       )}
 
                       {/* Medicine Schedule from Admission */}
-                      {admission.antibiotics_schedule && (
+                      {admission.antibiotics_schedule && Array.isArray(admission.antibiotics_schedule) && admission.antibiotics_schedule.length > 0 && (
                         <div className="space-y-3 pt-4 border-t">
                           <h4 className="text-lg font-semibold">Medicine Schedule</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {(() => {
-                              const schedule = admission.antibiotics_schedule;
-                              
-                              // Handle array format
-                              if (Array.isArray(schedule)) {
-                                return schedule.map((daySchedule: any, index: number) => (
-                                  <div key={index} className="rounded-lg border bg-card p-4 space-y-3">
-                                    <div className="font-semibold text-sm border-b pb-2">
-                                      Day {index + 1}
-                                    </div>
-                                    <div className="space-y-2">
-                                      {(daySchedule.medicines || daySchedule.items || [daySchedule]).map((med: any, medIndex: number) => (
-                                        <div key={medIndex} className="text-xs space-y-1">
-                                          <div className="font-medium">{med.medicine || med.name || "Medicine"}</div>
-                                          <div className="text-muted-foreground space-y-0.5">
-                                            {med.dosage && <div>Dose: {med.dosage}</div>}
-                                            {med.dose && <div>Dose: {med.dose}</div>}
-                                            {med.frequency && <div>Frequency: {med.frequency}</div>}
-                                            {med.time && <div>Time: {med.time}</div>}
-                                            {med.times && <div>Times: {Array.isArray(med.times) ? med.times.join(", ") : med.times}</div>}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
+                              // Group medicines by day
+                              const medicinesByDay = admission.antibiotics_schedule.reduce((acc: any, item: any) => {
+                                const day = item.day || 1;
+                                if (!acc[day]) acc[day] = [];
+                                acc[day].push(item);
+                                return acc;
+                              }, {});
+
+                              return Object.keys(medicinesByDay).sort((a, b) => Number(a) - Number(b)).map((day) => (
+                                <div key={day} className="rounded-lg border bg-card p-4 space-y-3">
+                                  <div className="font-semibold text-sm border-b pb-2">
+                                    Day {day}
                                   </div>
-                                ));
-                              }
-                              
-                              // Handle object format (day1, day2, etc.)
-                              if (typeof schedule === 'object') {
-                                const days = Object.keys(schedule).sort();
-                                if (days.length > 0) {
-                                  return days.map((day, index) => {
-                                    const dayData = schedule[day];
-                                    const medicines = Array.isArray(dayData) ? dayData : [dayData];
-                                    
-                                    return (
-                                      <div key={day} className="rounded-lg border bg-card p-4 space-y-3">
-                                        <div className="font-semibold text-sm border-b pb-2 capitalize">
-                                          {day.replace(/([A-Z])/g, ' $1').trim()}
-                                        </div>
-                                        <div className="space-y-2">
-                                          {medicines.map((med: any, medIndex: number) => (
-                                            <div key={medIndex} className="text-xs space-y-1">
-                                              <div className="font-medium">{med.medicine || med.name || "Medicine"}</div>
-                                              <div className="text-muted-foreground space-y-0.5">
-                                                {med.dosage && <div>Dose: {med.dosage}</div>}
-                                                {med.dose && <div>Dose: {med.dose}</div>}
-                                                {med.frequency && <div>Frequency: {med.frequency}</div>}
-                                                {med.time && <div>Time: {med.time}</div>}
-                                                {med.times && <div>Times: {Array.isArray(med.times) ? med.times.join(", ") : med.times}</div>}
-                                              </div>
+                                  <div className="space-y-2.5">
+                                    {medicinesByDay[day].map((med: any) => (
+                                      <div key={med.id} className="text-xs space-y-1">
+                                        <div className="font-medium text-foreground">{med.medicine_name}</div>
+                                        <div className="text-muted-foreground space-y-0.5">
+                                          <div>
+                                            <span className="font-medium">Dose:</span> {med.dose} {med.unit}
+                                          </div>
+                                          {med.time && (
+                                            <div>
+                                              <span className="font-medium">Time:</span> {med.time}
                                             </div>
-                                          ))}
+                                          )}
                                         </div>
                                       </div>
-                                    );
-                                  });
-                                }
-                              }
-                              
-                              // Fallback for other formats
-                              return (
-                                <div className="col-span-full rounded-md border bg-muted/30 p-4">
-                                  <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                                    {JSON.stringify(schedule, null, 2)}
-                                  </pre>
+                                    ))}
+                                  </div>
                                 </div>
-                              );
+                              ));
                             })()}
                           </div>
                         </div>
