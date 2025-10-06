@@ -4,8 +4,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Users } from "lucide-react";
 import { jsPDF } from "jspdf";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const donationFormSchema = z.object({
 type DonationFormValues = z.infer<typeof donationFormSchema>;
 
 const Donations = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
@@ -200,9 +202,15 @@ const Donations = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-3xl mx-auto">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Record Donation</h2>
-          <p className="text-muted-foreground">Add a new donation and generate receipt</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Record Donation</h2>
+            <p className="text-muted-foreground">Add a new donation and generate receipt</p>
+          </div>
+          <Button onClick={() => navigate("/donors")} variant="outline">
+            <Users className="mr-2 h-4 w-4" />
+            Donors
+          </Button>
         </div>
 
         <Card>

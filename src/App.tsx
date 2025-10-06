@@ -13,6 +13,7 @@ import Pets from "./pages/Pets";
 import TreatmentHistory from "./pages/TreatmentHistory";
 import Admissions from "./pages/Admissions";
 import Donations from "./pages/Donations";
+import Donors from "./pages/Donors";
 import Buildings from "./pages/Buildings";
 import Rooms from "./pages/Rooms";
 import Cages from "./pages/Cages";
@@ -85,6 +86,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Donations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/donors"
+              element={
+                <ProtectedRoute>
+                  <Donors />
                 </ProtectedRoute>
               }
             />
