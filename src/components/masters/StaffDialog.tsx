@@ -35,6 +35,7 @@ const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
   email: z.string().email("Invalid email address").min(1, "Email is required for login").max(255, "Email too long"),
   phone: z.string().max(20, "Phone number too long").optional().or(z.literal("")),
+  role: z.string().min(1, "Role is required"),
   specialization: z.string().max(255, "Specialization too long").optional().or(z.literal("")),
   license_number: z.string().max(100, "License number too long").optional().or(z.literal("")),
   password: z.string().optional().or(z.literal("")),
@@ -64,6 +65,7 @@ export function StaffDialog({
       name: "",
       email: "",
       phone: "",
+      role: "",
       specialization: "",
       license_number: "",
       password: "",
@@ -78,6 +80,7 @@ export function StaffDialog({
         name: staff?.name || "",
         email: staff?.email || "",
         phone: staff?.phone || "",
+        role: staff?.role || "",
         specialization: staff?.specialization || "",
         license_number: staff?.license_number || "",
         password: "",
@@ -152,6 +155,30 @@ export function StaffDialog({
                   <FormControl>
                     <Input placeholder="9876543210" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="receptionist">Receptionist</SelectItem>
+                      <SelectItem value="store_keeper">Store Keeper</SelectItem>
+                      <SelectItem value="accountant">Accountant</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
