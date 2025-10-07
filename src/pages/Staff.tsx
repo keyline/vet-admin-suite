@@ -128,37 +128,55 @@ const Staff = () => {
       if (!roleData || !["admin", "superadmin"].includes(roleData.role)) {
         throw new Error("Only administrators can create staff members");
       }
-
-      let userId = null;
-      
-      // Create auth user if password is provided
-      if (values.password && values.email) {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              full_name: values.name,
-            },
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-        
-        if (authError) throw new Error(`Authentication error: ${authError.message}`);
-        userId = authData.user?.id;
-      }
       
       // Remove password from staff data
-      const { password, ...staffData } = values;
+      const { password, role, ...staffData } = values;
       
-      // Insert staff record with user_id if created
-      const { data, error } = await supabase
+      // First, insert staff record without user_id
+      const { data: staffRecord, error: staffError } = await supabase
         .from("staff")
-        .insert([{ ...staffData, user_id: userId }])
+        .insert([staffData])
         .select()
         .single();
-      if (error) throw error;
-      return data;
+      if (staffError) throw staffError;
+
+      // Create auth user if password is provided
+      if (password && values.email) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-auth`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              staffId: staffRecord.id,
+              email: values.email,
+              password: password,
+              fullName: values.name,
+            }),
+          });
+
+          const authData = await response.json();
+          if (!response.ok) throw new Error(authData.error || 'Failed to create auth account');
+        } catch (authError: any) {
+          // If auth creation fails, still return the staff record but show a warning
+          toast({
+            title: "Staff created, but login setup failed",
+            description: authError.message,
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Add role to user_roles if staff has user_id
+      if (role && staffRecord.user_id) {
+        await supabase
+          .from("user_roles")
+          .insert([{ user_id: staffRecord.user_id, role }]);
+      }
+      
+      return staffRecord;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
