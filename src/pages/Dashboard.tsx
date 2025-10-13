@@ -4,8 +4,11 @@ import { PawPrint, Users, Bed, DollarSign, TrendingUp, AlertCircle } from "lucid
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   // Fetch total pets (excluding expired and returned to owner)
   const { data: totalPets, isLoading: isPetsLoading } = useQuery({
     queryKey: ["dashboard-pets"],
@@ -193,7 +196,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid gap-2">
-                <button className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted transition-colors">
+                <button onClick={() => navigate('/admissions')} className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted transition-colors">
                   <Users className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Add New Pet Owner</p>
